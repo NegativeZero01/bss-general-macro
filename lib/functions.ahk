@@ -1,6 +1,6 @@
-﻿/*HOTKEYS*/
+﻿/*HOTKEYS
 
-f1:: Start
+f1:: Start*/
 
 f3:: ReloadApp ; Initiates the hotkey to activate the function below
 ReloadApp() { ; Reload the macro
@@ -11,7 +11,7 @@ ReloadApp() { ; Reload the macro
 f4:: CloseApp ; Initiates the hotkey to activate the function below
 CloseApp() { ; Closes the macro
     result := MsgBox("Close Macro?", "Closing Macro", "0x4")
-    if (result = "Yes") {
+    if result = "Yes" {
         Exitapp
     }
     else {
@@ -21,37 +21,38 @@ CloseApp() { ; Closes the macro
 
 f6:: FieldTestDeterminer
 FieldTestDeterminer() {
+    if CurrentField = 1 {
+        GTFSunflower
+    }
     if CurrentField = 2 {
         GTFDandelion
+    }
+    if CurrentField = 19 {
+        ResetCharacter
+        GTUCannon
     }
 }
 
 
 /*GENERAL FUNCTIONS*/
 
-ZoomOutFully() { ; Zooms out the camera entirely
-    Loop 5 {
-        Send "{" ZoomOut " down}" "{" ZoomOut " up}"
-    }
-}
-
 ResetCharacter() { ; Resets the player's character back to hive
-    TapKey("Esc")
+    Send "{" EscKey " down}" "{" EscKey " up}"
     Sleep 100
-    TapKey("R")
+    Send "{" RKey " down}" "{" RKey " up}"
     Sleep 100
-    TapKey("Enter")
+    Send "{" Enter " down}" "{" Enter " up}"
     Sleep 10000
     if PixelSearch(&BeeSlotX, &BeeSlotY, 643, 107, 1242, 276, 0xdf9800) {
+        TapKey(ZoomOut, 5)
         return
     }
     else {
-        Loop 4 {
-            Send "{" RotLeft " down}" "{" RotLeft " up}"
+        TapKey(RotLeft, 4)
+        if PixelSearch(&BeeSlotX, &BeeSlotY, 643, 107, 1242, 276, 0xdf9800) {
+            TapKey(ZoomOut,)
+            return
         }
-            if PixelSearch(&BeeSlotX, &BeeSlotY, 643, 107, 1242, 276, 0xdf9800) {
-                return
-            }
             else {
                 ResetCharacter
             }
@@ -75,8 +76,31 @@ HyperSleep(ms) ; Creates a new sleep method which is far more accurate but takes
 	}
 }
 
+/*SUBSECTION ERRORS*/
+ErrorBox(ErrorMessage) {
+    result := MsgBox(ErrorMessage, "Oops! You've encountered an ultra-rare error...", "0x0")
+    if result = "Confirm" {
+        ReloadApp
+    }
+}
+
+CriticalError(ErrorMessage) {
+    result := MsgBox(ErrorMessage, "Critical Error", "0x2")
+    if result = "Abort" {
+        CloseApp
+    }
+    else if result = "Retry" {
+        ReloadApp
+    }
+    else if result = "Ignore" {
+        return
+    }
+}
+
+
 /*BITMAP FUNCTIONS*/
 
+/*SUBSECTION TEMPLATES*/
 ImageSearchBasic(imageName, Variation:=6) {
     GetRobloxClientPos(hwnd := GetRobloxHWND())
     offsetY := GetYOffset()
@@ -103,33 +127,34 @@ WalkUntilImage(imageName, Key, time := 10000) {
     Send "{" Key " up}"
     return false
 }
+/**/
 
-BackpackFullDetector(PollenContainerFull, Variation:=6) { ; Uses Gdip_ImageSearch to check if the user's backpack is full
+PollenContainerDetector(PollenContainerImage, Variation := 6) { ; Uses Gdip_ImageSearch to check the user's backpack
     GetRobloxClientPos(hwnd := GetRobloxHWND())
     offsetY := GetYOffset()
     pBMScreen := Gdip_BitmapFromScreen(windowX "|" windowY + offsetY "|" windowWidth "|" windowHeight - offsetY)
     Gdip_SaveBitmapToFile(pBMScreen, A_ScriptDir "\img\bitmap-debugging\backpackfill.png")
-    if (Gdip_ImageSearch(pBMScreen, bitmaps[PollenContainerFull], , , , , , Variation) = 1) {
-         Gdip_DisposeImage(pBMScreen)
-         Gathering := 0
+    if (Gdip_ImageSearch(pBMScreen, bitmaps[PollenContainerImage], , , , , , Variation) = 1) {
+        Gdip_DisposeImage(pBMScreen)
+        return 1
     }
     else {
         Gdip_DisposeImage(pBMScreen)
-        return
+        return 0
     }
 }
 
-InteractionDetector(General, Variation:=6) { ; Uses Gdip_ImageSearch to check if the user is on a GUI
+InteractionDetector(Button, Variation:=6) { ; Uses Gdip_ImageSearch to check if the user is on a GUI
     GetRobloxClientPos(hwnd := GetRobloxHWND())
     offsetY := GetYOffset()
     pBMScreen := Gdip_BitmapFromScreen(windowX "|" windowY + offsetY "|" windowWidth "|" windowHeight - offsetY)
     Gdip_SaveBitmapToFile(pBMScreen, A_ScriptDir "\img\bitmap-debugging\gui-e.png") ; See what the image is for debugging purposes
-    if (Gdip_ImageSearch(pBMScreen, bitmaps["PrimaryEButton"], , , , , , Variation) = 1) {
+    if (Gdip_ImageSearch(pBMScreen, bitmaps[Button], , , , , , Variation) = 1) {
         Gdip_DisposeImage(pBMScreen)
-        InteractionReturnValue := 1 ; The return value to end with if it was found
+        return 1 ; The return value to end with if it was found
    }
    else {
        Gdip_DisposeImage(pBMScreen)
-       InteractionReturnValue := 0 ; The return value to end with if it was not found
+       return 0 ; The return value to end with if it was not found
    }
 }

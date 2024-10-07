@@ -1,7 +1,7 @@
 ﻿PlaceSprinkler() {
-    TapKey("SpaceKey")
-    HyperSleep(450)
-    TapKey("One")
+    Send "{" SpaceKey " down}" "{" SpaceKey " up}"
+    HyperSleep(700)
+    Send "{" OneKey " down}" "{" OneKey " up}"
     Sleep 100
 }
 

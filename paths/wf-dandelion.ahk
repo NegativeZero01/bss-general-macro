@@ -1,34 +1,23 @@
 ﻿WFDandelion() {
-    DandelionCornerAlignment
+    Sleep 100
     Send "{" SKey " down}"
     Walk(44)
     Send "{" SKey " up}"
-    Loop 2 {
-        TapKey("RotLeft")
-    }
+    TapKey(RotRight, 2)
     Send "{" WKey " down}"
-    Walk(9)
+    Walk(35)
     Send "{" WKey " up}"
-
-    if HiveSlot = 1 {
-        Send "{" DKey " down}"
-        Walk(17)
-        Send "{" DKey " up}"
-        Send "{" WKey " down}"
-        Walk(20)
-        Send "{" WKey " up}"
-        Send "{" SKey " down}"
-        Walk(3)
-        Send "{" SKey " up}"
-        InteractionDetector("EButton")
-        if InteractionReturnValue = 1 {
-            TapKey("EKey")
-            Sleep (ConvertTime * 1000)
-            WFDandelion
-        }
-        else {
-            MsgBox "Error! Could not find hive. Resetting...", "Oops! You've ran into an error"
-            GTFDandelion
-        }
-    }
+    Send "{" SKey " down}"
+    Walk(3)
+    Send "{" SKey " up}"
+    Send "{" DKey " down}"
+    Walk(30)
+    Send "{" DKey " up}"
+    Send "{" SKey " down}"
+    Walk(2)
+    Send "{" SKey " up}"
+    WalkUntilImage("EButton", AKey, 180000)
+    TapKey(EKey)
+    Sleep(ConvertTime * 1000)
+    GTFDandelion
 }

@@ -1,7 +1,6 @@
 ﻿GTFSunflower() {
     ResetCharacter
-    ZoomOutFully
-    CannonSlopeAlignment
+    CannonRamp
     Send "{" SKey " down}"
     Walk(12)
     Send "{" SKey " up}"

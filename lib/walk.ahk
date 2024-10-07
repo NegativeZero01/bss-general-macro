@@ -68,7 +68,6 @@ DetectMovespeed(&s, &f, hasteCap:=0)
 	haste := 0 ; initially haste is number of hastes found (since haste = coconut haste icon)
 	Loop 3 ; melody, haste, coconut haste
 	{
-		OnError((e, mode) => (mode = "return") * (-1))
 		if (Gdip_ImageSearch(pBMArea, bitmaps["pBMHaste"], &list, x, 14, , , , , 6) != 1)
 			break ; no possibility of haste
 		
