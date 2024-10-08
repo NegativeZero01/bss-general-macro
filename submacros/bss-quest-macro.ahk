@@ -92,7 +92,7 @@ TapKey(Key, Loops := 1) {
 
 
 ; Main GUI object
-MainGui := Gui(,    "Bee Swarm's Quest Macro [INDEV]") ; Names the GUI
+MainGui := Gui(,    "BSS Quest Macro [INDEV]") ; Names the GUI
 
 MainGui.BackColor := "f0f2f0" ; Sets the colour of the background
 
