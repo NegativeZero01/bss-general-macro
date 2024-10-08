@@ -3,7 +3,7 @@
 <hr>
 Hi! I'm <b>NegativeZero,</b> and I'll be introducing you to my <b>macro for quests in BSS!</b><br>
 This is a project which is <b>part of an ambition I had to learn how to code.</b> I felt learning something more simple like this would <b>make a fun project to keep me busy.</b><p>
-First, to set up the macro, you need to <b>extract the .zip file, by right clicking it and clicking extract.</b> Simple! Next, run "Start.ahk" to open the macro. Please note that it is <b>currently open for testing and very far from complete.</b><br>
+First, to set up the macro, you need to <b>extract the .zip file, by right clicking it and clicking extract.</b> Simple! Next, run "START.bat" to open the macro. Please note that it is <b>currently open for testing and very far from complete.</b><br>
 Enter any details that you need to. Importantly, you need to confirm your hive slot (slot 1 being closest to the red cannon and slot 6 being closest to the noob shop) and your movespeed, which you can find in your BSS settings (make sure you have no haste when you check).<br>
 Next, choose your sprinkler, and for testing purposes, you can choose one of these paths that currently work:<ul>
 <li>Sunflower</li>
