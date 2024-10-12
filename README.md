@@ -30,4 +30,14 @@ Notes (ignore):
  - (f) is (field)
  - (u) is (use)
  - (qg) is (questgiver)
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+- grey is for background processes
+- red is for errors
+- green is for successes
+- yellow is for titles or names
+- blue is for plugs
+- magenta is for instructions
+- cyan is for ends
+- white is for pauses
+- reset should be at the end of every coloured echo
 --!>

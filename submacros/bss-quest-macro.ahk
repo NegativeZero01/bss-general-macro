@@ -17,9 +17,11 @@ TravelMethod := IniRead("settings\main-config.ini", "OtherSettings", "TravelMeth
 Gathering := 0
 
 
+
+
+
 ; Files
 #Include "%A_InitialWorkingDir%\lib\" ; Library
-#Include "json.ahk"
 #Include "FormData.ahk"
 #Include "roblox.ahk"
 #Include "walk.ahk"
