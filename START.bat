@@ -4,40 +4,47 @@ setlocal EnableDelayedExpansion
 chcp 65001 > nul
 cd %~dp0
 
-:: If the script and the AHK executable exist, run it:
+set "grey=[90m"
+set "red=[91m"
+set "green=[92m"
+set "yellow=[93m"
+set "blue=[94m"
+set "magenta=[95m"
+set "cyan=[96m"
+set "white=[97m"
+set "reset=[0m"
+
+echo ^<%blue%Join the Discord^^!: https://discord.gg/57YmdVy8gA%reset%^>
+echo:
+pause
+
+:: If the script and the AHK executable exist, start the macro:
 if exist "submacros\bss-quest-macro.ahk" (
 	if exist "submacros\AutoHotkey32.exe" (
 		if not [%~3]==[] (
 			set /a "delay=%~3" 2>nul
-			echo Starting Bee Swarm's Quest Macro in !delay! seconds.
-			<nul set /p =Press any key to skip . . . 
+			echo ^<%green%Starting BSS Quest Macro in !delay! seconds%reset%^>
+			<nul set /p =%grey%Press any key to skip . . .%reset%
 			timeout /t !delay! >nul
 		)
 		start "" "%~dp0submacros\AutoHotkey32.exe" "%~dp0submacros\bss-quest-macro.ahk" %*
 		exit
-	) else (set "exe_missing=1")
+	) else set ("exe_missing=1")
 )
 
 :: Else, check common directories to find the script and run it:
 for /f "delims=#" %%E in ('"prompt #$E# & for %%E in (1) do rem"') do set "\e=%%E"
-set cyan=%\e%[96m
-set green=%\e%[92m
-set purple=%\e%[95m
-set red=%\e%[91m
-set yellow=%\e%[93m
-set reset=%\e%[0m
 
 if "%exe_missing%" == "1" (
-	echo %red%Could not find the AHK executable in submacros!!!^^!%reset%
-	echo %red%This is most likely due to a third-party antivirus deleting the file. You can follow these steps to avoid this happening again:%reset%
-	echo %red% 1. Disable any third-party antivirus software ^(or add the "bss-quest-macro" folder as an exception^)%reset%
-	echo %red% 2. Redownload the macro and check that "submacros\AutoHotkey32.exe" exists%reset%
-	echo %red% 3. Run START.bat%reset%
+	echo ^<%red%Failed to find the AHK executable file in the submacros folder. This is most likely due to a third-party antivirus deleting the file or a corrupted installation. You can follow these steps to avoid this happening again%reset%^>%red%:%reset%
+	echo ^<%magenta%1. Disable any third-party antivirus software, or add the "bss-quest-macro" folder as an exception%reset%^>
+	echo ^<%magenta%2. Redownload the macro and check that "submacros\AutoHotkey32.exe" exists ^(make sure the folder is still an exception^^!^)%reset%^>
+	echo ^<%magenta%3. Re-run START.bat and see if this works%reset%^>
 	echo:
-	echo %red%Note: Both BSS Quest Macro and AutoHotkeyv2 are safe and work completely fine with Microsoft Defender^^!%reset%
-	echo %red%If you still experience any issues or would like to report/suggest anything, please feel free to join my Discord Server: discord.gg/57YmdVy8gA%reset%
+	echo ^<%red%Please note that both BSS Quest Macro and AutoHotkeyv2 are safe and work completely fine with Microsoft Defender%reset%^>
+	echo ^<%red%If you still experience any issues or would like to report/suggest anything, please feel free to join the%reset% %blue%Discord Server: discord.gg/57YmdVy8gA%reset%^>
 	echo:
-	<nul set /p "=%red%Press any key to exit . . . %reset%"
+	<nul set /p "=%grey%Press any key to exit . . . %reset%"
 	pause >nul
 	exit
 )
@@ -49,40 +56,40 @@ if not [!grandparent!] == [] (
 		call set str=%%zip:*.zip=%%
 		call set zip=%%zip:!str!=%%
 		if not [!zip!] == [] (
-			echo %cyan%Looking for !zip!...%reset%
+			echo ^<%yellow%Looking for !zip! . . .%reset%^>
 			cd %USERPROFILE%
-			for %%a in ("Downloads","Downloads\bss-quest-macro-v0.2.1.0","Desktop","Documents","OneDrive\Downloads","OneDrive\Downloads\bss-quest-macro-v0.2.1.0","OneDrive\Desktop","OneDrive\Documents") do (
+			for %%a in ("Downloads","Downloads\bss-quest-macro-v0.2.1.0","Desktop","Documents","OneDrive\Downloads","OneDrive\Downloads\bss-quest-macro","OneDrive\Desktop","OneDrive\Documents") do (
 				if exist "%%~a\!zip!" (
-					echo %cyan%Found in %%~a^^!%reset%
+					echo ^<%green%Found in %%~a%reset%^>
 					echo:
 					
-					echo %purple%Extracting %USERPROFILE%\%%~a\!zip!...%reset%
+					echo ^<%grey%Extracting %USERPROFILE%\%%~a\!zip! . . .%reset%^>
 					for /f delims^=^ EOL^= %%g in ('cscript //nologo "%~f0?.wsf" "%USERPROFILE%\%%~a" "%USERPROFILE%\%%~a\!zip!"') do set "folder=%%g"
-					echo %purple%Extract complete^^!%reset%
+					echo ^<%green%Extract complete%reset%^>
 					echo:
 					
-					echo %yellow%Deleting !zip!...%reset%
+					echo ^<%grey%Deleting unextracted !zip! . . .%reset%^>
 					del /f /q "%USERPROFILE%\%%~a\!zip!" >nul
-					echo %yellow%Deleted Successfully^^!%reset%
+					echo ^<%green%Deleted Successfully%reset%^>
 					echo:
 					
-					echo %green%Extract Complete^^! Starting the Macro in 10 seconds.%reset%
-					<nul set /p =%green%Press any key to skip . . . %reset%
+					echo ^<%green%Extract Complete^^! Starting bss-quest-macro in 10 seconds%reset%^>
+					<nul set /p =%grey%Press any key to skip . . . %reset%
 					timeout /t 10 >nul
 					start "" "%USERPROFILE%\%%~a\!folder!\submacros\AutoHotkey32.exe" "%USERPROFILE%\%%~a\!folder!\submacros\bss-quest-macro.ahk"
 					exit
 				)
 			)
-		) else (echo %red%Error: No .zip detected^^! Essential files are missing^^!%reset%)
-	) else (echo %red%Error: Could not determine name of unextracted .zip^^!%reset%)
-) else (echo %red%Error: Could not find Temp folder of unextracted .zip ^(.bat has no grandparent^)^^!%reset%)
+		) else (echo ^<%red%No .zip found, essential files are missing%reset%^>)
+	) else (echo ^<%red%Failed to determine the name of the unextracted .zip%reset%^>)
+) else (echo ^<%red%Could not find Temp folder of unextracted .zip ^(.bat has no grandparent^)%reset%^>)
 
-echo %red%Unable to automatically extract BSS Quest Macro^^!%reset%
-echo %red% - If you have already extracted, you are missing important files. Please redownload BSS Quest Macro.%reset%
-echo %red% - If you have not extracted, you may have to manually extract the zipped folder.%reset%
-echo %red%If you still experience any issues or would like to report/suggest anything, please feel free to join my Discord Server: discord.gg/57YmdVy8gA%reset%
+echo ^<%red%Unable to automatically extract the .zip%reset%^>
+echo ^<%red%- If you have already extracted, you are missing important files. Please redownload BSS Quest Macro%reset%^>
+echo ^<%red%- If you have not extracted, you may have to manually extract the zipped folder%reset%^>
+echo ^<%red%If you still experience any issues or would like to report/suggest anything, please feel free to join the%reset% %blue%Discord Server: discord.gg/57YmdVy8gA%reset%^>
 echo:
-<nul set /p "=%red%Press any key to exit . . . %reset%"
+<nul set /p "=%grey%Press any key to exit . . . %reset%"
 pause >nul
 exit
 
