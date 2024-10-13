@@ -1,5 +1,6 @@
 <centre><h1>BSS Quest Macro</h1>
 <h2>In-development Macro for BSS questgivers.</h2></centre>
+<img src="img\bqm-logo.png" alt="Logo"/>
 <hr>
 Hi! I'm <b>NegativeZero,</b> and I'll be introducing you to my <b>macro for quests in BSS!</b><br>
 This is a project which is <b>part of an ambition I had to learn how to code.</b> I felt learning something more simple like this would <b>make a fun project to keep me busy.</b><p>

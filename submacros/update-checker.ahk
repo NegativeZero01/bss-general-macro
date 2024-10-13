@@ -1,14 +1,23 @@
 ﻿#Requires AutoHotkey v2.0 
 #Include "%A_InitialWorkingDir%\lib\cJSON.ahk"
 
-global releases := QueryGitHubRepo("NegativeZero01/bss-quest-macro", "releases")
-result := MsgBox("A new, updated version of the macro has been found on the GitHub archive. This release is " releases[1]["tag_name"] ". Would you like to download it?", "New Update Available", "0x1") ; Display latest release version number
-if result = "OK" {
-        MsgBox("Please note that, if the displayed release was an 'alpha', 'beta' and/or 'pre-release', you will not be updated to it and instead just have the current version of bss-quest-macro redownloaded. Update.bat only installs the latest release so pre-releases will have to be installed manually", "Notice")
+QueryUpdate() {
+    result := MsgBox("An updated version of the macro was found. This release is " releases[1]["tag_name"] ", and your current version is " releasetag ". Would you like to download it?", "New Update Available", "0x1") ; Display latest release version number
+    if result = "OK" {
         run "update.bat"
         ExitApp
+    }
 }
+
+global releasetag := "v0.2.3.0-alpha.1"
+global releases := QueryGitHubRepo("NegativeZero01/bss-quest-macro", "releases")
 global ReleaseName := "bss-quest-macro-" releases[1]["tag_name"]
+
+if releases[1]["tag_name"] != releasetag {
+    QueryUpdate()
+} else {
+    ExitApp
+}
 
 QueryGitHubRepo(repo, subrequest := "", data := "", token := "") {
     whr := ComObject("WinHttp.WinHttpRequest.5.1")

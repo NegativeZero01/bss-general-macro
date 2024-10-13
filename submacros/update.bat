@@ -1,13 +1,15 @@
 @echo off
 setlocal enabledelayedexpansion
-set currentdir=%cd%
+set "scriptdir=%cd%"
 pushd ..
-set "parentdir=%cd%\"
+set "parentdir=%cd%"
 popd
 
+cd %parentdir%
 
 
-set "repo=https://api.github.com/repos/NegativeZero01/bss-quest-macro/releases/latest"
+
+set "repo=https://api.github.com/repos/NegativeZero01/bss-quest-macro/releases"
 set "macro_zipname=bss.zip"
 
 set "grey=[90m"
@@ -42,7 +44,6 @@ echo ^<%green%Successfully found the .zip download URL: [%zip_url%]%reset%^>
 echo:
 echo %grey%Downloading . . .%reset%
 echo:
-
 %_curl% -sL "%zip_url%" -o "%macro_zipname%"
     if not exist "%macro_zipname%" (
     echo ^<%red%Failed to download the .zip file from%reset% %yellow%[%repo%]%reset%^>
@@ -68,6 +69,7 @@ echo:
 echo %grey%Deleting unextracted .zip . . .%reset%
 echo:
 del /f /q "%macro_zipname%"
+cd %currentdir%
 echo ^<%green%Deleted the unextracted .zip%reset%^>
 echo:
 echo ^<%cyan%The operation to download the latest release was completed successfully^^! To complete installation, follow the steps below%reset%^>
