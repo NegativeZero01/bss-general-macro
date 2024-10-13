@@ -1,10 +1,10 @@
 <centre><h1>BSS Quest Macro</h1>
 <h2>In-development Macro for BSS questgivers.</h2></centre>
-<img src="img\bqm-logo.png" alt="Logo"/>
+<img src="img\bqm-logo.png" alt="Logo" width="250" height="250"/>
 <hr>
 Hi! I'm <b>NegativeZero,</b> and I'll be introducing you to my <b>macro for quests in BSS!</b><br>
 This is a project which is <b>part of an ambition I had to learn how to code.</b> I felt learning something more simple like this would <b>make a fun project to keep me busy.</b><p>
-First, to set up the macro, you need to <b>extract the .zip file, by right clicking it and clicking extract.</b> Simple! Next, run "START.bat" to open the macro. Please note that it is <b>currently open for testing and very far from complete.</b><br>
+First, to set up the macro, you need to <b>extract the .zip file, by right clicking it and clicking extract.</b> Simple! Next, run "Start.bat" to open the macro. Please note that it is <b>currently open for testing and very far from complete.</b><br>
 Enter any details that you need to. Importantly, you need to confirm your hive slot (slot 1 being closest to the red cannon and slot 6 being closest to the noob shop) and your movespeed, which you can find in your BSS settings (make sure you have no haste when you check).<br>
 Next, choose your sprinkler, and for testing purposes, you can choose one of these paths that currently work:<ul>
 <li>Sunflower</li>
@@ -15,8 +15,8 @@ Bees in hive is also important, so the macro knows where you can and can't go. T
 Finally, reps and convert delay. Convert delay is the time (in seconds) to wait while converting. This will be the case until there is an automatic detection system. Reps is the amount of times a field's pattern will repeat before it realigns. Recommended presets will be listed somewhere below, but you can always test different amounts until they work well for you! Also, settings do not need to be reset every time you reopen the macro, unless you're changing them from their previous value.<p>
 Congrats! You set up the macro. F1 to start and F6 for field testing. F3 to reload and F4 to close.<br>
 Please DM me on Discord if you have any suggestions, concerns, ideas etc. and if you would like to be a tester or make contributions! My username is "negat1vezero".<br>
-Thanks for downloading v0.2.2.1!<p>
-Oh yeah, keep in mind if the macro fails to run upon extracting just try opening START.bat a few more times.<p>
+Thanks for downloading v0.3.0.0-alpha.2!<p>
+Oh yeah, keep in mind if the macro fails to run upon extracting just try opening Start.bat a few more times. You can also run "update.bat" to try and reinstall it.<p>
 <b>Discord Server: discord.gg/57YmdVy8gA</b>
 
 <!--
