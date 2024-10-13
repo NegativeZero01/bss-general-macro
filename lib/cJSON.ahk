@@ -1,934 +1,356 @@
-flag := cJSON.dll_file("cJSON.dll")
-if flag
-    DllCall("LoadLibrary", "str", flag)
+;
+; cJson.ahk 2.0.0-git-built
+; Copyright (c) 2023 Philip Taylor (known also as GeekDude, G33kDude)
+; https://github.com/G33kDude/cJson.ahk
+;
+; MIT License
+;
+; Permission is hereby granted, free of charge, to any person obtaining a copy
+; of this software and associated documentation files (the "Software"), to deal
+; in the Software without restriction, including without limitation the rights
+; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+; copies of the Software, and to permit persons to whom the Software is
+; furnished to do so, subject to the following conditions:
+;
+; The above copyright notice and this permission notice shall be included in all
+; copies or substantial portions of the Software.
+;
+; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+; SOFTWARE.
+;
+#Requires AutoHotkey v2.0
 
-class cJSON
+class JSON
 {
-    static cJSON_False := 0
-    static cJSON_True := 1
-    static cJSON_NULL := 2
-    static cJSON_Number := 3
-    static cJSON_String := 4
-    static cJSON_Array := 5
-    static cJSON_Object := 6
-    static cJSON_IsReference := 256
-    static cJSON_StringIsConst := 512
-    
-    __new(jsonPtr := cJSON.Null())
-    {
-        this.jsonPtr := 0
-        if !(jsonPtr is cJSON.Null)
-            this.jsonPtr := jsonPtr
-    }
-    
-    __call(name, param)
-    {
-        if substr(name, 1, 2) = "is"
-        {
-            if this.jsonPtr
-                return cJSON.%"cJSON_" name%(this.jsonPtr)
-            return false
-        }
-    }
-    
-    __item[key]
-    {
-        get
-        {
-            try
-            {
-                if this.type = cJSON.cJSON_Array
-                {
-                    return cJSON(cJSON.cJSON_GetArrayItem(this.jsonPtr, key))
-                }
-                else if this.type = cJSON.cJSON_Object
-                {
-                    return cJSON(cJSON.cJSON_GetObjectItem(this.jsonPtr, key))
-                }
-            }
-            return cJSON.Null()
-        }
-    }
-    
-    get()
-    {
-        if this.type = cJSON.cJSON_Number
-            return cJSON.cJSON_GetNumberValue(this.jsonPtr)
-        else if this.type = cJSON.cJSON_String
-            return cJSON.cJSON_GetStringValue(this.jsonPtr)
-        else if this.type = cJSON.cJSON_True
-            return cJSON.Boolean(true)
-        else if this.type = cJSON.cJSON_False
-            return cJSON.Boolean(false)
-        else if this.type = cJSON.cJSON_Array
-        {
-            ret := []
-            loop this.length
-                ret.push(this[a_index - 1].get())
-            return ret
-        }
-        else if this.type = cJSON.cJSON_Object
-            return this
-        return cJSON.Null()
-    }
-    
-    getType()
-    {
-        switch true
-        {
-            case this.IsFalse():
-                return cJSON.cJSON_False
-            case this.IsTrue():
-                return cJSON.cJSON_True
-            case this.IsNull():
-                return cJSON.cJSON_NULL
-            case this.IsNumber():
-                return cJSON.cJSON_Number
-            case this.IsString():
-                return cJSON.cJSON_String
-            case this.IsArray():
-                return cJSON.cJSON_Array
-            case this.IsObject():
-                return cJSON.cJSON_Object
-            default:
-                return -1
-        }
-    }
-    
-    has(key)
-    {
-        if this.type = cJSON.cJSON_Array
-            return isnumber(key) && key < this.length && key > 0
-        else if this.type = cJSON.cJSON_Object
-            return cJSON.cJSON_HasObjectItem(this.jsonPtr, key)
-        return false
-    }
-    
-    length
-    {
-        get => this.type = cJSON.cJSON_Array ? cJSON.cJSON_GetArraySize(this.jsonPtr) : 0
-    }
-    
-    parse(value)
-    {
-        this.jsonPtr := cJSON.cJSON_Parse(value)
-        if this.jsonPtr
-            return true
-        return false
-    }
-    
-    type
-    {
-        get => this.getType()
-    }
-    
-    static dll_file(dll_name)
-    {
-        if !dll_name
-            return false
-        if fileexist(dll_name)
-            return dll_name
-        else if fileexist(format("{}\lib\{}", regread("HKLM\SOFTWARE\AutoHotkey", "InstallDir", ""), dll_name))
-            return format("{}\lib\{}", regread("HKLM\SOFTWARE\AutoHotkey", "InstallDir", ""), dll_name)
-        else if fileexist(format("{}\lib\{}", a_scriptdir, dll_name))
-            return format("{}\lib\{}", a_scriptdir, dll_name)
-        else
-            return false
-    }
-    
-    static strBuffer(str, encoding := "utf-8")
-    {
-        buf := buffer(strput(str, encoding))
-        strput(str, buf, encoding)
-        return buf
-    }
-    
-    static cJSON_AddArrayToObject(_object, name)
-    {
-        return dllcall("cJSON\cJSON_AddArrayToObject", "ptr", _object, "ptr", this.strBuffer(name))
-    }
-    
-    static cJSON_AddBoolToObject(_object, name, b)
-    {
-        return dllcall("cJSON\cJSON_AddBoolToObject", "ptr", _object, "ptr", this.strBuffer(name), "int", b)
-    }
-    
-    static cJSON_AddFalseToObject(_object, name)
-    {
-        return dllcall("cJSON\cJSON_AddFalseToObject", "ptr", _object, "ptr", this.strBuffer(name))
-    }
-    
-    static cJSON_AddItemReferenceToArray(_array, item)
-    {
-        return dllcall("cJSON\cJSON_AddItemReferenceToArray", "ptr", _array, "ptr", item)
-    }
-    
-    static cJSON_AddItemReferenceToObject(_object, _string, item)
-    {
-        return dllcall("cJSON\cJSON_AddItemReferenceToObject", "ptr", _object, "ptr", _string, "ptr", item)
-    }
-    
-    static cJSON_AddItemToArray(_array, item)
-    {
-        return dllcall("cJSON\cJSON_AddItemToArray", "ptr", _array, "ptr", item)
-    }
-    
-    static cJSON_AddItemToObject(_object, _string, item)
-    {
-        return dllcall("cJSON\cJSON_AddItemToObject", "ptr", _object, "ptr", this.strBuffer(_string), "ptr", item)
-    }
-    
-    static cJSON_AddItemToObjectCS(_object, _string, item)
-    {
-        return dllcall("cJSON\cJSON_AddItemToObjectCS", "ptr", _object, "ptr", this.strBuffer(_string), "ptr", item)
-    }
-    
-    static cJSON_AddNullToObject(_object, name)
-    {
-        return dllcall("cJSON\cJSON_AddNullToObject", "ptr", _object, "ptr", this.strBuffer(name))
-    }
-    
-    static cJSON_AddNumberToObject(_object, name, n)
-    {
-        return dllcall("cJSON\cJSON_AddNumberToObject", "ptr", _object, "ptr", this.strBuffer(name), "int", n)
-    }
-    
-    static cJSON_AddObjectToObject(_object, name)
-    {
-        return dllcall("cJSON\cJSON_AddObjectToObject", "ptr", _object, "ptr", this.strBuffer(name))
-    }
-    
-    static cJSON_AddRawToObject(_object, name, raw)
-    {
-        return dllcall("cJSON\cJSON_AddRawToObject", "ptr", _object, "ptr", this.strBuffer(name), "ptr", this.strBuffer(raw))
-    }
-    
-    static cJSON_AddStringToObject(_object, name, s)
-    {
-        return dllcall("cJSON\cJSON_AddStringToObject", "ptr", _object, "ptr", this.strBuffer(name), "ptr", this.strBuffer(s))
-    }
-    
-    static cJSON_AddTrueToObject(_object, name)
-    {
-        return dllcall("cJSON\cJSON_AddTrueToObject", "ptr", _object, "ptr", this.strBuffer(name))
-    }
-    
-    static cJSON_Compare(a, b, case_sensitive) ; => int
-    {
-        return dllcall("cJSON\cJSON_Compare", "ptr", a, "ptr", b, "int", case_sensitive)
-    }
-    
-    static cJSON_CreateArray() ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_CreateArray")
-    }
-    
-    static cJSON_CreateArrayReference(child) ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_CreateArrayReference", "ptr", child)
-    }
-    
-    static cJSON_CreateBool(b) ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_CreateBool", "int", b)
-    }
-    
-    static cJSON_CreateDoubleArray(numbers, count) ; => cJSON*
-    {
-        dllcall("cJSON\cJSON_CreateDoubleArray", "ptr", numbers, "int", count)
-    }
-    
-    static cJSON_CreateFalse() ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_CreateFalse")
-    }
-    
-    static cJSON_CreateFloatArray(numbers, count) ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_CreateFloatArray", "ptr", numbers, "int", count)
-    }
-    
-    static cJSON_CreateIntArray(numbers, count) ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_CreateIntArray", "ptr", numbers, "int", count)
-    }
-    
-    static cJSON_CreateNull() ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_CreateNull")
-    }
-    
-    static cJSON_CreateNumber(num) ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_CreateNumber", "double", num)
-    }
-    
-    static cJSON_CreateObject() ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_CreateObject")
-    }
-    
-    static cJSON_CreateObjectReference(child) ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_CreateObjectReference", "ptr", child)
-    }
-    
-    static cJSON_CreateRaw(raw) ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_CreateRaw", "ptr", this.strBuffer(raw))
-    }
-    
-    static cJSON_CreateString(_string) ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_CreateString", "ptr", this.strBuffer(_string))
-    }
-    
-    static cJSON_CreateStringArray(strings, count) ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_CreateStringArray", "ptr", strings, "int", count)
-    }
-    
-    static cJSON_CreateStringReference(_string) ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_CreateStringReference", "ptr", this.strBuffer(_string))
-    }
-    
-    static cJSON_CreateTrue() ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_CreateTrue")
-    }
-    
-    static cJSON_Delete(c)
-    {
-        return dllcall("cJSON\cJSON_Delete", "ptr", c)
-    }
-    
-    static cJSON_DeleteItemFromArray(_array, which)
-    {
-        return dllcall("cJSON\cJSON_DeleteItemFromArray", "ptr", _array, "int", which)
-    }
-    
-    static cJSON_DeleteItemFromObject(_object, _string)
-    {
-        return dllcall("cJSON\cJSON_DeleteItemFromObject", "ptr", _object, "ptr", this.strBuffer(_string))
-    }
-    
-    static cJSON_DeleteItemFromObjectCaseSensitive(_object, _string)
-    {
-        return dllcall("cJSON\cJSON_DeleteItemFromObjectCaseSensitive", "ptr", _object, "ptr", this.strBuffer(_string))
-    }
-    
-    static cJSON_DetachItemFromArray(_array, which) ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_DetachItemFromArray", "ptr", _array, "int", which)
-    }
-    
-    static cJSON_DetachItemFromObject(_object, _string) ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_DetachItemFromObject", "ptr", _object, "ptr", this.strBuffer(_string))
-    }
-    
-    static cJSON_DetachItemFromObjectCaseSensitive(_object, _string) ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_DetachItemFromObjectCaseSensitive", "ptr", _object, "ptr", this.strBuffer(_string))
-    }
-    
-    static cJSON_DetachItemViaPointer(parent, item) ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_DetachItemViaPointer", "ptr", parent, "ptr", item)
-    }
-    
-    static cJSON_Duplicate(item, recurse) ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_Duplicate", "ptr", item, "int", recurse)
-    }
-    
-    static cJSON_GetArrayItem(_array, index) ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_GetArrayItem", "ptr", _array, "int", index)
-    }
-    
-    static cJSON_GetArraySize(_array) ; => int
-    {
-        return dllcall("cJSON\cJSON_GetArraySize", "ptr", _array)
-    }
-    
-    static cJSON_GetErrorPtr() ; => const char*
-    {
-        return strget(dllcall("cJSON\cJSON_GetErrorPtr"), , "utf-8")
-    }
-    
-    static cJSON_GetNumberValue(item) ; => double
-    {
-        return dllcall("cJSON\cJSON_GetNumberValue", "ptr", item, "double")
-    }
-    
-    static cJSON_GetObjectItem(_object, _string) ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_GetObjectItem", "ptr", _object, "ptr", this.strBuffer(_string))
-    }
-    
-    static cJSON_GetObjectItemCaseSensitive(_object, _string) ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_GetObjectItemCaseSensitive", "ptr", _object, "ptr", this.strBuffer(_string))
-    }
-    
-    static cJSON_GetStringValue(item) ; => char*
-    {
-        return strget(dllcall("cJSON\cJSON_GetStringValue", "ptr", item), , "utf-8")
-    }
-    
-    static cJSON_GetObjectType(_object, flags := false)
-    {
-        if flags
-            return _object
-        _mcode := "2,x64:SIsCSIsQSIsCSGNIGEiJCsM="
-        fn := cJSON.native.func(_mcode, 1, 1)
-        fn(_type := _object)
-        return _type
-    }
-    
-    static cJSON_HasObjectItem(_object, _string) ; => int
-    {
-        return dllcall("cJSON\cJSON_HasObjectItem", "ptr", _object, "ptr", this.strBuffer(_string))
-    }
-    
-    static cJSON_InitHooks(hooks)
-    {
-        return dllcall("cJSON\cJSON_InitHooks", "ptr", hooks)
-    }
-    
-    static cJSON_InsertItemInArray(_array, which, newitem)
-    {
-        return dllcall("cJSON\cJSON_InsertItemInArray", "ptr", _array, "int", which, "ptr", newitem)
-    }
-    
-    static cJSON_IsArray(_array) ; => int
-    {
-        return dllcall("cJSON\cJSON_IsArray", "ptr", _array)
-    }
-    
-    static cJSON_IsBool(b) ; => int
-    {
-        return dllcall("cJSON\cJSON_IsBool", "ptr", b)
-    }
-    
-    static cJSON_IsFalse(b) ; => int
-    {
-        return dllcall("cJSON\cJSON_IsFalse", "ptr", b)
-    }
-    
-    static cJSON_IsInvalid(b) ; => int
-    {
-        return dllcall("cJSON\cJSON_IsInvalid", "ptr" b)
-    }
-    
-    static cJSON_IsNull(n) ; => int
-    {
-        return dllcall("cJSON\cJSON_IsNull", "ptr", n)
-    }
-    
-    static cJSON_IsNumber(num) ; => int
-    {
-        return dllcall("cJSON\cJSON_IsNumber", "ptr", num)
-    }
-    
-    static cJSON_IsObject(_object) ; => int
-    {
-        return dllcall("cJSON\cJSON_IsObject", "ptr", _object)
-    }
-    
-    static cJSON_IsRaw(raw) ; => int
-    {
-        return dllcall("cJSON\cJSON_IsRaw", "ptr", raw)
-    }
-    
-    static cJSON_IsString(_string) ; => int
-    {
-        return dllcall("cJSON\cJSON_IsString", "ptr", _string)
-    }
-    
-    static cJSON_IsTrue(b) ; => int
-    {
-        return dllcall("cJSON\cJSON_IsTrue", "ptr", b)
-    }
-    
-    static cJSON_Minify(json) ; => char*
-    {
-        buf := this.strBuffer(json)
-        dllcall("cJSON\cJSON_Minify", "ptr", buf)
-        return strget(buf, , "utf-8")
-    }
-    
-    static cJSON_Parse(value) ; => cJSON*
-    {
-        if value is file
-            value := value.read()
-        else
-        {
-            try
-                value := fileread(value)
-        }
-        return dllcall("cJSON\cJSON_Parse", "ptr", this.strBuffer(value))
-    }
-    
-    static cJSON_ParseWithLength(_string, buffer_length) ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_ParseWithLength", "ptr", this.strBuffer(_string), "int", buffer_length)
-    }
-    
-    static cJSON_ParseWithLengthOpts(value, buffer_length, return_parse_end, require_null_terminated) ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_ParseWithLengthOpts", "ptr", value, "int", buffer_length, "ptr", return_parse_end, "int", require_null_terminated)
-    }
-    
-    static cJSON_ParseWithOpts(value, return_parse_end, require_null_terminated) ; => cJSON*
-    {
-        return dllcall("cJSON\cJSON_ParseWithOpts", "ptr", this.strBuffer(value), "ptr", return_parse_end, "int", require_null_terminated)
-    }
-    
-    static cJSON_Print(item) ; => char*
-    {
-        return strget(dllcall("cJSON\cJSON_Print", "ptr", item), , "utf-8")
-    }
-    
-    static cJSON_PrintBuffered(item, prebuffer, fmt) ; => char*
-    {
-        return strget(dllcall("cJSON\cJSON_PrintBuffered", "ptr", item, "int", prebuffer, "int", fmt), , "utf-8")
-    }
-    
-    static cJSON_PrintPreallocated(item, buffer, length, fmt) ; => int
-    {
-        return dllcall("cJSON\cJSON_PrintPreallocated", "ptr", item, "ptr", buffer, "int", length, "int", fmt)
-    }
-    
-    static cJSON_PrintUnformatted(item) ; => char*
-    {
-        return strget(dllcall("cJSON\cJSON_PrintUnformatted", "ptr", item), , "utf-8")
-    }
-    
-    static cJSON_ReplaceItemInArray(_array, which, newitem)
-    {
-        return dllcall("cJSON\cJSON_ReplaceItemInArray", "ptr", _array, "int", which, "ptr", newitem)
-    }
-    
-    static cJSON_ReplaceItemInObject(_object, _string, newitem)
-    {
-        return dllcall("cJSON\cJSON_ReplaceItemInObject", "ptr", _object, "ptr", this.strBuffer(_string), "ptr", newitem)
-    }
-    
-    static cJSON_ReplaceItemInObjectCaseSensitive(_object, _string, newitem, case_sensitive)
-    {
-        return dllcall("cJSON\cJSON_ReplaceItemInObjectCaseSensitive", "ptr", _object, "ptr", this.strBuffer(_string), "ptr", newitem, "int", case_sensitive)
-    }
-    
-    static cJSON_ReplaceItemViaPointer(_object, item, replacement)
-    {
-        return dllcall("cJSON\cJSON_ReplaceItemViaPointer", "ptr", _object, "ptr", item, "ptr", replacement)
-    }
-    
-    static cJSON_SetNumberHelper(_object, num)
-    {
-        return dllcall("cJSON\cJSON_SetNumberHelper", "ptr", _object, "double", num)
-    }
-    
-    static cJSON_SetValuestring(item, _string)
-    {
-        return dllcall("cJSON\cJSON_SetValuestring", "ptr", item, "ptr", this.strBuffer(_string))
-    }
-    
-    static cJSON_Version()
-    {
-        return strget(dllcall("cJSON\cJSON_Version"), , "utf-8")
-    }
-    
-    static cJSON_free(_object)
-    {
-        return dllcall("cJSON\cJSON_free", "ptr", _object)
-    }
-    
-    static cJSON_malloc(len) ; => ptr
-    {
-        return dllcall("cJSON\cJSON_malloc", "int", len)
-    }
-    
-    class Boolean
-    {
-        __new(flag)
-        {
-            this.data := !!flag
-        }
-    }
-    
-    class native extends func
-    {
-        static prototype.caches := map()
+	static version := "2.0.0-git-built"
 
-        ; Auto free the NativeFunc object memory, because destructor is overridden, ahk will not free the memory.
-        ; Freeing memory before func obj is released can cause invalid reads and writes to memory.
-        ; Delayed free memory, the memory of the last function is freed when the function object is released.
-        __delete()
-        {
-            numput('ptr', pthis := objptr(this), objptr(this.base.caches[''] := buffer()), 3 * A_PtrSize + 8)
-            try this.base.caches.delete(numget(pthis + 6 * A_PtrSize + 16, 'ptr'))
-        }
+	static BoolsAsInts {
+		get => this.lib.bBoolsAsInts
+		set => this.lib.bBoolsAsInts := value
+	}
 
-        ; Provides a way for modules to call ahk objects
-        static __get(name, params) => params.length ? %name%[params*] : %name%
-        static __call(name, params)
-        {
-            if name = 'throw'
-            {
-                if len := params.length
-                {
-                    msg := params[1], extra := len > 1 ? params[2] : '', errobj := len > 2 ? %params[3]% : msg is Integer ? oserror : error
-                    throw errobj(msg, -1, extra)
-                }
-                throw error('An exception occurred', -1)
-            }
-            return %name%(params*)
-        }
+	static NullsAsStrings {
+		get => this.lib.bNullsAsStrings
+		set => this.lib.bNullsAsStrings := value
+	}
 
-        ; create c/c++ function from mcode, and return the function address
-        static mcode(hex)
-        {
-            static reg := "^([12]?).*" (A_PtrSize = 8 ? "x64" : "x86") ":([A-Za-z\d+/=]+)"
-            if (regexmatch(hex, reg, &m))
-                hex := m[2], flag := m[1] = "1" ? 4 : m[1] = "2" ? 1 : hex ~= "[+/=]" ? 1 : 4
-            else
-                flag := hex ~= "[+/=]" ? 1 : 4
-            if (!dllcall("crypt32\CryptStringToBinary", "str", hex, "uint", 0, "uint", flag, "ptr", 0, "uint*", &s := 0, "ptr", 0, "ptr", 0))
-                throw oserror(A_LastError)
-            if (dllcall("crypt32\CryptStringToBinary", "str", hex, "uint", 0, "uint", flag, "ptr", p := (code := buffer(s)).Ptr, "uint*", &s, "ptr", 0, "ptr", 0) && dllcall("VirtualProtect", "ptr", code, "uint", s, "uint", 0x40, "uint*", 0))
-                return (this.prototype.caches[p] := code, p)
-            throw oserror(A_LastError)
-        }
+	static EscapeUnicode {
+		get => this.lib.bEscapeUnicode
+		set => this.lib.bEscapeUnicode := value
+	}
 
-        /**
-         * Generate a func object with native code
-         * @param BIF Function addresses, `void funcname(ResultToken &aResultToken, ExprTokenType *aParam[], int aParamCount)`
-         * @param MinParams The number of required parameters
-         * @param ParamCount The number of maximum parameters, ParamCount = 255 if the function is variadic
-         * @param OutputVars The array that contains one-based indexs of outputvars, up to seven
-         * @param FID Function ID, `aResultToken.func->mFID`, for code sharing: this function's ID in the group of functions which share the same c++ function
-         */
-        static func(bif, minparams := 0, paramcount := 0, outputvars := 0, fid := 0)
-        {
-            static p__init := objptr(Any.__Init), size := 8 * A_PtrSize + 16
-            if bif is string
-                bif := this.mcode(bif)
-            ; copy a func object memory
-            sbif := buffer(outputvars ? size + 7 : size, 0), dllcall('RtlMoveMemory', 'ptr', sbif, 'ptr', p__init, 'uint', size)
-            obif := objfromptr(sbif.Ptr)
-            if isvariadic := paramcount == 255
-                paramcount := minparams
-            else paramcount := max(minparams, paramcount)
-            ; init func refcount and base obj
-            numput('uint', 1, 'uint', 0, 'ptr', objptraddref(cJSON.native.prototype), sbif, A_PtrSize)
-            ; init func infos
-            numput('ptr', strptr('User-bif'), 'int', paramcount, 'int', minparams, 'int', isvariadic, sbif, 3 * A_PtrSize + 8)
-            numput('ptr', bif, 'ptr', fid, sbif, 6 * A_PtrSize + 16)
-            if outputvars
-            {
-                numput('ptr', s := sbif.Ptr + size, sbif, 5 * A_PtrSize + 16)	; mOutputVars
-                loop min(outputvars.length, 7)	; MAX_FUNC_OUTPUT_VAR = 7
-                    s := numput('uchar', outputvars[A_Index], s)
-            }
-            numput('ptr', 0, 'ptr', 0, objptr(sbif), 3 * A_PtrSize + 8) ; Avoid the memory of func object be freed when buffer is released
-            return obif
-        }
+	static fnCastString := Format.Bind('{}')
 
-        /**
-         * Generate a method with native code, is same with `cJSON.native.func`
-         * @param base The base of instance
-         */
-        static method(base, bim, mit, minparams := 0, paramcount := 0, mid := 0)
-        {
-            static pownprops := objptr({}.OwnProps), size := 9 * A_PtrSize + 16, nameoffset := 3 * A_PtrSize + 8
-            if bim is string
-                bim := this.mcode(bim)
-            sbim := buffer(size, 0), dllcall('RtlMoveMemory', 'ptr', sbim, 'ptr', pownprops, 'uint', size)
-            obim := objfromptr(sbim.ptr), isvariadic := paramcount == 255
-            switch mit, false
-            {
-                case 'call', 2: ++minparams, paramcount := isvariadic ? minparams : max(minparams, paramcount + 1), numput('ptr', strptr('User-bim'), sbim, nameoffset), mit := 2
-                case 'set', 1: minparams += 2, paramcount += 2, mit := 1, numput('ptr', strptr('User-bim.Set'), sbim, nameoffset)
-                case 'get', 0: ++minparams, paramcount := max(minparams, paramcount + 1), numput('ptr', strptr('User-bim.Get'), sbim, nameoffset), mit := 0
-            }
-            numput('uint', 1, 'uint', 0, 'ptr', objptraddref(cJSON.native.prototype), sbim, A_PtrSize)
-            numput('int', max(minparams, paramcount), 'int', minparams, 'int', isvariadic, sbim, 4 * A_PtrSize + 8)
-            numput('ptr', bim, 'ptr', base, 'uchar', mid, 'uchar', mit, sbim, 6 * A_PtrSize + 16)
-            numput('ptr', 0, 'ptr', 0, objptr(sbim), 3 * A_PtrSize + 8)
-            return obim
-        }
+	static __New() {
+		this.lib := this._LoadLib()
 
-        /**
-         * Defines a new own property with native code, is similar with `obj.DefineProp`
-         * @param obj Any object
-         * @param name The name of the property
-         * @param desc An object with one of following own properties, or both `Get` and `Set`
-         * 
-         * `Call, Get, Set`: an object with `bim` property and optional properties `minparams`, `paramcount`, `outputvars`, `mid`, is same with the parameters of `BuiltInFunc`
-         * 
-         * `bim`: `void (IObject::* ObjectMethod)(ResultToken& aResultToken, int aID, int aFlags, ExprTokenType* aParam[], int aParamCount)`
-         */
-        static defineprop(obj, name, desc)
-        {
-            descobj := {}, baseobj := objptr(obj.base)
-            for mit in ['call', 'set', 'get']
-                if desc.hasownprop(mit)
-                {
-                    t := desc.%mit%, minparams := paramcount := mid := 0, bim := t.bim
-                    for k in ['minparams', 'paramcount', 'mid']
-                        if t.hasownprop(k)
-                            %k% := t.%k%
-                    descobj.%mit% := this.method(baseobj, bim, mit, minparams, paramcount, mid)
-                }
-            obj.defineprop(name, descobj)
-        }
+		; Populate globals
+		this.lib.objTrue := ObjPtr(this.True)
+		this.lib.objFalse := ObjPtr(this.False)
+		this.lib.objNull := ObjPtr(this.Null)
 
-        /**
-         * Create a class with constructor function address
-         * @param ctor constructor function address, `void funcname(ResultToken &aResultToken, ExprTokenType *aParam[], int aParamCount)`
-         * 
-         * constructor function used to create an object
-         */
-        static class(name, ctor := 0, fid := 0)
-        {
-            cls := class(), cls.prototype := { base: object.prototype, __class: name }
-            if ctor
-                cls.defineprop('Call', {call: this.func(ctor, 1, 255, 0, fid)})
-            return cls
-        }
+		this.lib.fnGetMap := ObjPtr(Map)
+		this.lib.fnGetArray := ObjPtr(Array)
 
-        /**
-         * Load a dll file with the specified format to create native functions and classes
-         * @param path ahk module path
-         * @param load_symbols Load symbols that specific names, will overwrite existing global classes
-         * @param loader Create native functions and classes based on the information provided by the module, or do it in the module
-         * @param provider Used to provide the ahk objects required by the module
-         */
-        static loadmodule(path, load_symbols := 0, loader := 0, provider := 0)
-        {
-            if !(module := dllcall('LoadLibrary', 'str', path, 'ptr'))
-                throw oserror(A_LastError)
-            module_load_addr := dllcall('GetProcAddress', 'ptr', module, 'astr', 'ahk2_module_load', 'ptr') || dllcall('GetProcAddress', 'ptr', module, 'ptr', 1, 'ptr')
-            if !module_load_addr
-                throw error('Export function not found')
-            if load_symbols
-            {
-                t := map(), t.casesense := false
-                for k in load_symbols
-                    t[k] := true
-                load_symbols := t
-            }
-            if !p := dllcall(module_load_addr, 'ptr', objptr(loader || default_loader), 'ptr', objptr(provider || cJSON.native), 'cdecl ptr')
-                throw error('Load module fail', -1, oserror(A_LastError).Message)
-            return objfromptr(p)
+		this.lib.fnCastString := ObjPtr(this.fnCastString)
+	}
 
-            default_loader(count, addr)
-            {
-                static size := 2 * A_PtrSize + 16
-                symbols := map(), symbols.casesense := false, symbols.defineprop('__call', { call: (s, n, p) => s[n](p*) })
-                loop count
-                {
-                    name := strget(pname := numget(addr, 'ptr'))
-                    if load_symbols && !load_symbols.Has(name)
-                    {
-                        addr += size
-                        continue
-                    }
-                    funcaddr := numget(addr += A_PtrSize, 'ptr')
-                    minparams := numget(addr += A_PtrSize, 'uchar')
-                    maxparams := numget(addr += 1, 'uchar')
-                    id := numget(addr += 1, 'ushort')
-                    if member_count := numget(addr += 2, 'uint')
-                    {
-                        try
-                        {
-                            if !load_symbols || !isobject(symbol := %name%)
-                                throw
-                            symbols[name] := symbol
-                            if !symbol.hasownprop('prototype')
-                                symbol.prototype := this.class(name, 0).prototype
-                            if funcaddr
-                                symbol.defineprop('Call', {call: me := this.func(funcaddr, 1, maxparams + 1, 0, id)}), numput('ptr', pname, objptr(me), 3 * A_PtrSize + 8)
-                        }
-                        catch
-                            symbols[name] := symbol := this.class(name, funcaddr, id)
-                        pmem := numget(addr += 4, 'ptr')
-                    }
-                    staticmembers := {}, members := {}
-                    loop member_count
-                    {
-                        name := strget(pname := numget(pmem, 'ptr'))
-                        method := numget(pmem += A_PtrSize, 'ptr')
-                        id := numget(pmem += A_PtrSize, 'uchar')
-                        mit := numget(pmem += 1, 'uchar')
-                        minparams := numget(pmem += 1, 'uchar')
-                        maxparams := numget(pmem += 1, 'uchar')
-                        namearr := strsplit(name, '.')
-                        if mit < 2 && namearr.length > 2
-                            namearr.pop()
-                        name := namearr.pop()
-                        sub := mit = 2 ? 'call' : mit = 1 ? 'set' : 'get'
-                        if namearr.length < 2
-                            mems := staticmembers, pbase := objptr(symbol.base)
-                        else
-                            mems := members, pbase := objptr(symbol.prototype.base)
-                        if !mems.hasownprop(name)
-                            t := mems.%name% := {}
-                        else t := mems.%name%
-                        t.%sub% := me := this.method(pbase, method, mit, minparams, maxparams, id)
-                        numput('ptr', pname, objptr(me), 3 * A_PtrSize + 8)
-                        pmem += A_PtrSize - 3
-                    }
-                    else
-                    {
-                        symbols[name] := symbol := this.func(funcaddr, minparams, maxparams, 0, id)
-                        numput('ptr', pname, objptr(symbol), 3 * A_PtrSize + 8)
-                        if numget(addr += 4, 'uchar')	; set mOutputVars
-                            numput('ptr', addr, objptr(symbol), 5 * A_PtrSize + 16)
-                    }
-                    if member_count
-                    {
-                        if symbol == map	; Break circular references if map has define native funcs
-                            OnExit(onexitapp.Bind(map(map, [staticmembers*], map.prototype, [members*])))
-                        for name, desc in staticmembers.ownprops()
-                            symbol.defineprop(name, desc)
-                        symbol := symbol.prototype
-                        for name, desc in members.ownprops()
-                            symbol.defineprop(name, desc)
-                    }
-                    addr += 8
-                }
-                return symbols
+	
+	static _LoadLib32Bit() {
+		static lib, code := Buffer(6624), codeB64 := ""
+		. "ubgAVYnlV1aNlbAA/v//U4HsnAEAAACLRRSLdQhIx4W0AJD2FAB4XVAMiYWcADCKAhSIBIWjABSLBolUJBgUjZUBkAASCMdE2CQQAAAAAA4MAIYB"
+		. "DgAE3BMAAIk0JBD/UBSLAr6D7BgAg/r/dSm6ChUAAABmD74ChMAAD4TzAwAAhdsAdAyLC415AokAO2aJAesFi0UAEP8AQuvcMcBIjb24ADi5BABR"
+		. "8yCrjX2cuQAtAGY0x4UBFQgBEgIJjb0CyAUliUWYMcDzIKuLBo2NARONfYCYiUwkGIl8AKuEvdgDqwTHhcAACaIcAITHRaAErCAEXqochAMQhAsM"
+		. "hAcIgQMRAmYYMcCCNI2V6EeAIgFBgSuD7CSFP43uvQEMg0IANxiAQYN/g0JO+IAEgGABGggAA0fgzYAFJgFHs0MI/4NDgSw/ikMBDJBDBTOAQgEZ"
+		. "CADox4UAQAouQyBCHoEqT1YfwCxDIAAbZoPCXgMgdQmDvdAAAgB1rlmABAFAggTwggRSgASBwSIDdRODvRAAApVAHKRABgJAE3U/ioOe5EAclYMD"
+		. "DYEg6wrDAouBJwGJGMAUjVWoxIkQiwaDvYIXi0AUCA+Fr4MsFI1VuBkCqkW4BDrWq9CLVZqo0qpHGCeAIX3IBaoyjQEkiwYFWoGgjU1KyAZXTBdX"
+		. "6aeGK4ikjX1ELIhAwqqoxYS7DS7FhNCGhMEfAczMAsyjADMAA0W4ZgA/A4CGMsiAJkXAQV/ChVXIuMdF0PVg4QcwQBRgJI8HQaIko0EhDwl0XUMm"
+		. "lHQY1CXg4ACJXMAHQHXIwf4fieAKjQBFyIkEJIl1zAjo5hGiLA6LA40AUAKJE2bHACKCAAQHMf/pHgeiAwIbQzwBixMZwIMA4OCNSgKDwHsgiQtm"
+		. "iQJEBYC9kYGVALpOIBN1boFExiggE8Ijx4WY5EigIqy9OMUCgQFIiQFYiQESaIcBD7ZCoImFlFmgAOm5YAIAEhWgHHEoAokzoBxCgx916WTriEIR"
+		. "6+7gIuEHA5APhV8FACW9cGFgGA+EUoIBghEPhGGxgksPhC9BsEYfLAAZY4ENAxkPhSqhA2JfSMCD+AEPhmniAWEYKGaD+OAL0qA6i4UGQOABwitF"
+		. "uMH4H1iJRbzBLYIsuIAs6OqEIEj/giCNQgcgV2CBQcEdDECJhWDgALglwki1QQKNlQEnicEIiZVQgUqljX3YQ4AFASUMQI214QCJG+ReQAOs4k2B"
+		. "TciNjRFBHsdFsOJMRaiL1IUggWIQg2GobU2ZYqFmXAQk/1KhjolAuGgPhKbBLw5gKKIs6TbTwAEVMS4EMYQpD4QVwcbroVMk0AVHO32QGA+PlUAE"
+		. "ulGgLsTr56MH34uFQSEBLZR1HEAHESlU6YEAFMXjBHogBBR1SXRYJV+ZwTGFMMEnIDLyDoM/lsKBCKkKvAACulNhkOCD+Al1KMxqBBfIaiEiCutN"
+		. "ulxDBgh1TiroDaMD4Q3eD8AaX+W1JQfUEg+/Ag9aJKULXZMkOnILfA7kAy2AASksiwMkF/UBOsAXS/0JYCVQBPEAQAIgAAzpO/AAMAOLdRCLBXEC"
+		. "QFUaRcKJBuk2HsABAhUWmhMhLukvYbMBCQ+FxYETQgG6ImugDzsF2MBcdSSdlVsOgAI/E5NbunACA7LQCgPd/A8DBgN2AgMa1AoDrA8DBgOLdRgB"
+		. "ggsEJI1WAYu1g2FDsFMQiXQkDDAPoWAACOh19uAMaDAEXUIbHkob0jzAFinAFukSRDACunvTHQUPhRLGE3B9vII38g8QQ9ICATiIjY14AjiIIaIz"
+		. "RbihxAALx0VOjOEAZTghYYgFUAHAD/9fPzk/OTI58g8RRRKQgDkxwKA5i1WAAGaLFAJmhdIPKISY+zwRETARdRCA/waDwALr1t8nZ9sn7h4xEMkL"
+		. "AierNzDbcAYzQCaRAFU6CfAkEi/j0A6RQwjrFdIVVAExAfQV3ACuUQZUEgOhBh8DOwQIEwNSxkxSArlmUHVKLvAJdu9pwH3jaWADfw97DzHJO00Y"
+		. "fbK6okeKAuO2MD8gcAMAFIszjUYCiQMjMANiAWaJBlYm1EEE68eiAI1l9In4IFteX13Dsb2/EzAAgABWob1hH3UMAItdCGbHBhQAFMdGYxxGUh2L"
+		. "A2YBwAxFpI1K92aDIPkXD4f2MB+J+ADT6InBgOEBdBAKi0WkMBuJA+sA1maD+lsPhbWdcsKkJY+yAZGmocgwJntgJfUlyCQkb60vJWxei6BFwI1V"
+		. "tPBjjLOFCMdFtIMspIsAi3R9pDOSsO2QtMhzBDyPscfAj9INpA13E7oREYDT6oDiAXQaQw3C30ANXQ+EvzGxcSuKtsEDdKAnHCTogWKJwGaFhtAF"
+		. "jX3cYjY4jVXYUKaACGAIddiox0XgkQeLZJG07w48JBhvD/y0oQrztD4JaUAaRgi1JVICHBoMEFSJ+uMLEeML4uALLEQPhJIuE4PIgCw6kF0PhdDB"
+		. "hcICYArBYTIGCQDpwFARoALYIg+F0R3hG1BgKWBYhIlWMSEIAOnVERDAg/p7D4UVMd4BHurYDB7MCx7YP0M/Qw8eVQIeffJCAxAdZnBfSAmTJ4Y8"
+		. "Ugr4fQ+EFo2RAIF+hCMBIg+EJj6QABAO6fOiAcl0CPONepGlg/lcD0KFEZ1mi0oC0AAi5HUhoGX+IgAQ4A3ACwCLE414/maLChGyAcbp3XIO+Vx1"
+		. "gXAPQP5cAOvX0ABCL9MALwDrydAAYqHTAAgA67vQAGbTAFAMAOut0ABu0wAKKADrn9AActMADQAU65HQAHTTAAkA68KD0AB1D4VNYBlgCFjHRZhy"
+		. "2TFv/oEKUAD+izvB4gSJfRCkZolQsAkPjXkA0GaD/wl3BAFA+usgjXm/wAAFAHcGjVQKyesRBI15kAb/BQ+H/zFBm1QKqaAnYQODxwAC/02YiTt1"
+		. "rwTpFiFMiUj+6Q0hcSBGCIn50B8pwSCJSPxmxzCziRNk6duQmI1CQAYAc5YCwXAeLQ+UwLS2AAjBiE2kD4TLAAEAAGbHBhQAwr8AQADHRggAKAAw"
+		. "AgwBMIsDZoM4LQB1CIPAAoPP/wSJAwA8iwBmg/gIMHUTC6CDAwLrEFiD6DEANggPhwBU/v//iwtmiwABZolFooPoMAEAKgl3OWtGDAoAg8ECiUWU"
+		. "uAoBAGT3ZgiJC4lVAJyJRZiLRZQBAEWcD79FopkDAEWYE1Wcg8DQAIPS/4lGCIlWiAzrtQKFLnQTAX0AEIPi32aD+kUQdEXpygF3wAK5QQG2iQPf"
+		. "bggAxQUAAN1eCIsTZosCAgV2ymvJCoPCAAKJE4lNmNtFApgAkZjefZjcRlIIACjr1YAfiYAuPjgUdQsJIAE0gDItdBAKxkWkAHj6K3UOBQIVAoAE"
+		. "LQ+HbP0Q//8xwIF0EYPqgYAJ+gl3D2vAAXIAD7/SiQsB0OsQ4zHJuoFPOch0AAZr0gpB6/aAUH2kAN0AbFWBRnSABN756wLeyYE5AhaAHxR1I4n4"
+		. "iwBODJmLRggPrwDPD6/CAcGJ+EmAlAHKA4bpEYAmMcLAABUFD4XogAUBJSB9pNpNpAAh6dcRAAi5axWA54P6dAB1QWYPvgGEwAGAmxNBZjsCD4UQ"
+		. "vfz//wKF6+WASD24EwBLdA6APAMTAX0BKetKQAMJAKGS2IAG6ZwABLlwwxKoZnVFzRJxzxIVxRIpyIXrZIMU0EAI60yEuXbDE24PhTHAD1XNFB3J"
+		. "FMDCFA+ADwgQAKHgFIB4RgjrGhZDE9TABoADixCJAAQk/1IEUDHABOncQAu6EwCAAADT6onRgOEBD0iExfsAoVWkAhTpApAAA41FyIkcJACJRCQE"
+		. "6N34/8D/hcAPhavBCAF7AI1K92aD+Rd30jHEEIDiQBCNQAdCfQDr24sTg8j/ZmCDOn11dgIUwiGJEH4I64SAMzoPhUJihQqJdCQEQBnoSntEGElB"
+		. "GEXQgAUIZIk8Ax8cAgLWBx0TGQcddJYDHMG4LHWJEQID6dP6AC9l9FuAXl9dw5CQkIFq/8UAPwAfAB8AHwAfAB8AHwABDwAwMTIzNDU2ADc4OUFC"
+		. "Q0RFAEYAAEgAYQBzAABNAGUAdABoEABvAGSgBCJVbgBrbm93bl9PYgBqZWN0XwAAUFQAdaAEaGADUyIFAEAATwB3AG7gAnJFYAZwYAMAAF8gAEUR"
+		. "YAJ1AG2gAQ0KABgJACIFCCYKVHlwAGVfAHRydWUAAGZhbHNlAG51hGxsxwNWYWx14AMB6A0AAFWJ5VdWAI1VtI19vFODAOx8i3UIi10QCMdFtAKy"
+		. "BolUJBAUjVUMwAAIx0TEJBBibUQkDGK3oEsB4QGJNCT/UBSLCAO5AyEGUwyD7IAYZsdF2AgAgJ8IyItDYI/UjVW4AIlF0ItFDIlFIOAxwPOrYGPH"
+		. "RQLAAFMAiUW4iwbVIAkgJAsc5AAYIguADz+hDsEMoQ5kAyN+qQ8YgwDsJGaDOwl1DDPgDeR0CFCHWGIcU4GU7KwhFEUAr0XmAAEBoAVQBIsAicGJ"
+		. "CNOBwSADgIPTAECD+wAPhq0CE6BgjX2wMcCiGiEWmACJVaSNTYiJRYisocQAgsdFmCIkABCJTCQYjU2sjMdFQZhA20WYFIAD/rQkJOoaQAXiGWQD"
+		. "8xlhFwgYMcAgGotVkGYAixQCZoXSD4QCi0ADhfZ0DIsOAI1ZAokeZokRgOsFi30Q/wdgdkjr1rkAlgC7wdyFEMB5K78BAZm7MAGhCU2ESff/KdMA"
+		. "ZolcTb6FwHUA6YtNhIPpAmYAx0RNvi0A6xAAmUn3+4PCMGYEiVTCA/AByY1EhA2+wdGF0nQaFg4y3kArMcCDK2Mrg+wADItdDIt9CIsAdRCF23QO"
+		. "iwMEjVAClwAiAOsjEP8G6x9g2CJ1K5WwASKxAQSQAVwAAQIAQAIiAIPHAmaIiwdmEAjZ6TrQESCDBgLr6wADXHUKGAAD8Q0DXADrzQuhf9IB090B"
+		. "YgDrrx3QAQzSAdB82wFmAOuikdABCnUb0AGX3QEgbgDpcP+gYoP4AA11H4XbD4RyQ9AATQJyAOlLQwIJBUMCTU8CAnQA6SYRYAGAPbySZQuNUALg"
+		. "QFZedxHrQo1EUIGgACF2BhAEHxx3M3AI0DPbA3UA6wYDQBByXFwkBA+3kgdwIeg9kATp0NCOASADD4sTjUoCiUALZokC6b0gAf8YBum2kwG7FwL/"
+		. "BgiDxAx1MDHAieURwRoQi1XwGhCLTQAIic5mwekEgyTmD+BxtuRwJGaJAHRF8ECD+AR1DOS4sS+AIBGLCo1AcQKJMmaLoAFmBIkxQAUDg+gBczDk"
+		. "g8QQYSByYg=="
+		if (32 != A_PtrSize * 8)
+			throw Error("$Name does not support " (A_PtrSize * 8) " bit AHK, please run using 32 bit AHK")
+		; MCL standalone loader https://github.com/G33kDude/MCLib.ahk
+		; Copyright (c) 2023 G33kDude, CloakerSmoker (CC-BY-4.0)
+		; https://creativecommons.org/licenses/by/4.0/
+		if IsSet(lib)
+			return lib
+		if !DllCall("Crypt32\CryptStringToBinary", "Str", codeB64, "UInt", 0, "UInt", 1, "Ptr", buf := Buffer(3955), "UInt*", buf.Size, "Ptr", 0, "Ptr", 0, "UInt")
+			throw Error("Failed to convert MCL b64 to binary")
+		if (r := DllCall("ntdll\RtlDecompressBuffer", "UShort", 0x102, "Ptr", code, "UInt", 6624, "Ptr", buf, "UInt", buf.Size, "UInt*", &DecompressedSize := 0, "UInt"))
+			throw Error("Error calling RtlDecompressBuffer",, Format("0x{:08x}", r))
+		for import, offset in Map(['OleAut32', 'SysFreeString'], 5340) {
+			if !(hDll := DllCall("GetModuleHandle", "Str", import[1], "Ptr"))
+				throw Error("Could not load dll " import[1] ": " OsError().Message)
+			if !(pFunction := DllCall("GetProcAddress", "Ptr", hDll, "AStr", import[2], "Ptr"))
+				throw Error("Could not find function " import[2] " from " import[1] ".dll: " OsError().Message)
+			NumPut("Ptr", pFunction, code, offset)
+		}
+		for offset in [30, 91, 116, 249, 392, 522, 643, 755, 779, 800, 933, 1094, 1248, 1449, 1823, 1956, 2007, 2258, 2264, 2307, 2313, 2356, 2362, 2485, 2539, 2815, 2865, 2892, 2970, 3151, 3234, 3632, 4567, 4606, 4633, 4643, 4682, 4716, 4723, 4766, 4779, 4794, 5835, 6392, 6564]
+			NumPut("Ptr", NumGet(code, offset, "Ptr") + code.Ptr, code, offset)
+		if !DllCall("VirtualProtect", "Ptr", code, "Ptr", code.Size, "UInt", 0x40, "UInt*", &old := 0, "UInt")
+			throw Error("Failed to mark MCL memory as executable")
+		lib := {
+			code: code,
+		dumps: (this, pObjIn, ppszString, pcchString, bPretty, iLevel) =>
+			DllCall(this.code.Ptr + 0, "Ptr", pObjIn, "Ptr", ppszString, "IntP", pcchString, "Int", bPretty, "Int", iLevel, "CDecl Ptr"),
+		loads: (this, ppJson, pResult) =>
+			DllCall(this.code.Ptr + 3036, "Ptr", ppJson, "Ptr", pResult, "CDecl Int")
+		}
+		lib.DefineProp("bBoolsAsInts", {
+			get: (this) => NumGet(this.code.Ptr + 5048, "Int"),
+			set: (this, value) => NumPut("Int", value, this.code.Ptr + 5048)
+		})
+		lib.DefineProp("bEscapeUnicode", {
+			get: (this) => NumGet(this.code.Ptr + 5052, "Int"),
+			set: (this, value) => NumPut("Int", value, this.code.Ptr + 5052)
+		})
+		lib.DefineProp("bNullsAsStrings", {
+			get: (this) => NumGet(this.code.Ptr + 5056, "Int"),
+			set: (this, value) => NumPut("Int", value, this.code.Ptr + 5056)
+		})
+		lib.DefineProp("fnCastString", {
+			get: (this) => NumGet(this.code.Ptr + 5060, "Ptr"),
+			set: (this, value) => NumPut("Ptr", value, this.code.Ptr + 5060)
+		})
+		lib.DefineProp("fnGetArray", {
+			get: (this) => NumGet(this.code.Ptr + 5064, "Ptr"),
+			set: (this, value) => NumPut("Ptr", value, this.code.Ptr + 5064)
+		})
+		lib.DefineProp("fnGetMap", {
+			get: (this) => NumGet(this.code.Ptr + 5068, "Ptr"),
+			set: (this, value) => NumPut("Ptr", value, this.code.Ptr + 5068)
+		})
+		lib.DefineProp("objFalse", {
+			get: (this) => NumGet(this.code.Ptr + 5072, "Ptr"),
+			set: (this, value) => NumPut("Ptr", value, this.code.Ptr + 5072)
+		})
+		lib.DefineProp("objNull", {
+			get: (this) => NumGet(this.code.Ptr + 5076, "Ptr"),
+			set: (this, value) => NumPut("Ptr", value, this.code.Ptr + 5076)
+		})
+		lib.DefineProp("objTrue", {
+			get: (this) => NumGet(this.code.Ptr + 5080, "Ptr"),
+			set: (this, value) => NumPut("Ptr", value, this.code.Ptr + 5080)
+		})
+		return lib
+	}
+	
+	
+	static _LoadLib64Bit() {
+		static lib, code := Buffer(6960), codeB64 := ""
+		. "a7gAQVdBVkFVQVQAVVdWU0iB7GgAAgAASI0FiBYBADCJ00SJTCRcQEiJzUSKbAEchAgkkAAAXIsBTIlAxkiNlCSMATSJQFQkKEG5AQEUjYAVHhUA"
+		. "AEyNA04Qx0QkIAAMAP9QBCiLA1aD+v91LgUASj4AumYPvgKEIMAPhGIEADiF2wB0D0iLC0yNQQACTIkDZokB6wAC/wZI/8Lr2SBFMeS5BgA6RTEA"
+		. "yUUxwESJ4EgQjbwkmAAQTI20hCSwAXTHhCTAAWbZAADzqwIrAL/uAIcBKaLIAqGEJKACFoQCOQcBDwE5AEzzq0iLRbUADIwCFGYAJQEQCAARQEwk"
+		. "MEiJ6QEh4L0EMrgEMoQ3AngAcUCBCQUBBDgBBEyJdCQo4wF8AQ//UDCAMQVfgDVYjQVggEsECMCBQ+j3hEsCMgA2+ItPAbIBCYRTuwBIgLYwBjsE"
+		. "qwEcEAA474FfASSAX6RHhIIbCSSCVA3AEyjABQALTI0dtQ4UyR8AJIEGTImcJP4YwAHCI4QhgR+BE4Mf20UlwBVdwBVmg4NoA3XKCkAC0EEKdV4B"
+		. "BQE9MwMFAlp1TgEFAR4DdUoQQAIwAQVBvMCqAKR1OQCU7RMHlBFBsOEalOsGQbwBEEA8QDpCQEVAQYP8AgM6TFuEBcGYGIATQbQAgRWLEEAoD4WB"
+		. "SEyJREQkKMBDTYnwgB8o3hJERMAIg8LGvtAAR4EOdYW+Q0gqZwFQVyqDJzDvAA8DvwIpQW2MAgVCZBBaSnxBrkxHW+nFgnQ9Vv8AKYFv6IJt6YTs"
+		. "iZNAWCEcifcCeTHSgDi/IQQiXYYYhA+jRiJmlGMQ3aAFQKEwxD8BIANBSWABLiBgAUEDYQQ4ZARMib604gbEBnVoQBhhDwPFi89gKKQWQEeAKP4R"
+		. "Q0dhNEgJdFvjKXQbdyndBYUmSeA1idpIiawZogHoT6AxoAYPhLACBwEqA0iNUAJIAIkTZscAIgDpFp5hAkAKGwBDAUiLIBMZwIPgIHJKAgCDwHtI"
+		. "iQtmiUICwQuAfCRcIZ+uUWASD4WpxkpYYBMxYO1FD7b1QidBSrhjQALhN7wkcGVOwwGIXcsBoMsBwQbGAYQCC0jdwE9wgQEBCYEBeIEBIjIVgAFg"
+		. "gQHQJANo6bc7wSjgGB1KI8Ai4yZ144jpSv8AAAbr7GEqFaENAwAZBWBWvCTAEUE0D4SboAGF7Q/EhIQjVg+EUQEB6SUSLGEgqhBgRITtDwSFTsAD"
+		. "QY1EJP9Ag/gBD4aSoAGLUWMVZoP4gAsBIDtI8GOEJHihCCAzwUaBjxPhACM06LXAKf/FSEKLQRuLfCRoQ2BI0IuMJEgBK9KhTeEk9AxAAQeowhGg"
+		. "l6SgASrgDEAPKIxiBCEEwU11oQlwwVHgBFwi2kQHmJHgAA8QlEIHDylEbNXgA1gEB2ABB9gIBwIs3IsBxAkiXQBXKPhZYikwEZQkSIAFAFmJxwKF"
+		. "gICI/v//SJiE6TMgLP8G6behAaVgNRp1NesuADXvgSykhJtgBesfoQUwtQUY/8c7wKrADQ+PbQEhC40VCg8AAOs64GAI2WAeQUkhMnUlXVEEEQww"
+		. "wjNQGmBQAumC1hE+g/gUdUivAm+kAoAcoQIEHPSABqIizUsig6s1wtOCfw5CBQk8dS0vPC88AAvxBetOxZADTpMDCHUqISFoB7ItICjrYS8UKRQE"
+		. "IRR4SA+/tDQEKKVBYyjo7jTzC68O0QMvkQGgB5gBIjqSL4QU/WEWUASBQgFAAiAA6QIQASSLBnAC/8ARAkXCgIkG6e78///SFGYN0QdhMOkEYAKx"
+		. "EA8GhQMTYwFIOw27C6myEmsNsG4npWPhAARXvxKmY2ADZGMDOWoDqqtvA2wDPWMDCGoDc28DR2kDgBkxJkWJ8TMU/wLAcEcg6KL1///E6TiTDgh1"
+		. "GCUNhBoShBAc6RqBBY0Vn8IM0hwFD4Xx9lMRNXF4b/IPEPVCxGCANyjjZGVBaQ1DCqOUgQMxQD1xAAVmReECEWmSOYsB/3OUoASjR5VvAQVPabVw"
+		. "kQHA8g8RhCQIAzzxSAiUJPBBNIsUAmZAhdIPhEn7nxKJghGSEoPAAuvPjym3jykUIXQSrLARUQMUPTRk3vpBW+nXYACnPAkMdRAFMVAO/1AQ64oU"
+		. "0hcOVQH/FXtwEh/XWAQDkhUOA1EB/xVKL4EVhFczAjVvupABdTXV0QlzP3J9NHJaPw85DzYjMg8gAiwvAkxMfZUlMAdJMAfr5EAD3f8SBgAYgcQR"
+		. "y1teXwBdQVxBXUFeQThfw5AKAJbNYZtJuIQAJhMeZscCFIAfAMtIidZIx0IIAWMhE2aLCmaD+RAgD4f7Mq7ASNMA6KgBdAlIg8IJcRfr3cABWw+F"
+		. "u78RaEAqYGnzxuABIijQEYMsiRNgK6ElgFO1vRMEAIAoJ1QkaEjBxOUJNCdMjaQzyQ8nWceySIsgghJTVFDYjVgFgQl0fjOcTIB2YKhIiwcQA1zD"
+		. "afkVLSMX2NAjZosIwQ13FABIiepI0+qA4kWSDcCQDQPr4JABXQgPhLyREYXJD4QCs3IE8kiJ2ei7U4BjgGqFk+IfBzM5TNSJZPGvtMILi2EJQAf9"
+		. "ADSoRNKxADHXBNNhAX81BYUAMPwOZoM+CXWgHkiLTggkKRIXCyYdFAv3DHbiUAAsD0yEMeAwIByDyPBGOjBdD4XyEHWEG2bHhAYJ4Ax+COkCQAEh"
+		. "4AIiD4UXgu5CAoMgAsBaA0iJRghgAhAIAOnkkm75ew/chQ6QD38ecB74oQV9HnK/fx7B538efx54Hqxjcx62DQ+GWODxkAB9WA+E7ZEAsRnkIwEi"
+		. "mA+EVpAA8A7pB1ENgIXJdPNMjUDyM0CD+VwPhQ2CSUgCArECdSZmx0L+GiIgDMDSDnERiwNMAI1C/hu3AGaLCGaD+SJ1QL/p5gAAAACgXAB1CGbH"
+		. "Qv5cABTr0gBoLwNoLwDrCsQANGIDNAgA67aFADRmAzQMAOuoABpCbgMaCgDrmgAaciEDGg0A64wAGnR1AgsBGgkA6Xv//0L/ACB1D4VDABJIQIPA"
+		. "BEG5BAB4SAyJAwEhAIGLQv5MAIsDweAEZolCAP5mQYsIRI1RANBmQYP6CXcFoEQB0OskAA+/AQ8ABXcGjUQIyesKEwAQnwIQD4fu/gT//wAUqUmD"
+		. "wAIBAT9MiQNB/8l1CKrpCgF3iUr+6QIBAXaLVghMicEBAH0CSCnRiUr8CGZBx4NB6eECAAAAjUHQZoP4CRBBD5bAAFUtD5QAwEEIwA+EuAFBgE7H"
+		. "BhQAugAEABBIx0YIAAMASIuAA2aDOC11C4ImWIPK/4AigQmLgKX4CDB1DoYTgwMC6xA2g+gxAAsID4cCRQBUSIsLSA+/EAFEjUiBb/kJdwAXTGtO"
+		. "CApIg4DBAkiJC0mNgHZASIlGCOvXgzEuhHQUAiwIg+HfgEsgRXRW6fACLMACBEG5AkmJA/JIDwQqRoC8BgUA8g8IEUYIADFmiwGDBOgwAWh3wEVr"
+		. "yYQKmIEv8g8qwIAxAPJBDyrJ8g9eQMHyD1hGCEIM6wbMAjKAY4M+FHUQhw8UQSCBRXQJRTHBR5grdQdEDMAGMckAPgGEGw+HYP3//0xVQCBBhyAP"
+		. "QCBJACCYAEyJCwHB6+FFBDHJwVUARDnJdAAIa8AKQf/B6wLzQCfI8g8QRgggRYTAdAbBJ+sEmPIPWUApQCCLDgAdAhQAVg+vVghIiTBWCOktABCC"
+		. "IgUPbIX8wAKAD8KACwQ06QbpwW3BoFNIjQ0kIQCbZg++AQAWGEgAixNI/8FmOwJQD4W2/AGjwkAxEyDr4IA9xoEkdBJNgD0DAnqBA+nGwcfHJAYJ"
+		. "gHwNJoCJ6auRA8xmdU0AFtADEhZqXQsWbQIWDwYWQYbrSnBFFbBAB+tYwdIPRIUkAQ6NDX+TFQaFixU2wytIiwWtACatgBMIAIPAchZFFmYACAhI"
+		. "iU6AbwH/UAgQMcDp1MKL+kjTAOqA4gEPhJn7E4JxoTjpfWABTIniAEiJ2ei/+P//YIXAD4WXwQMlPyCUdxgoB3wnB+vcoAPQOg+FaUYC8oAIAAMU"
+		. "6HfkCE/iCJQkoAGgD0mJ8EiJ6egmzAAWRwt2K6AALA9EhHCidBODyICFOhh9dSlkHcMZiW4ITOk5AQSlEHTUJRC1EEiBxLCAC1teX4BdQVzDkJCQ"
+		. "ISP/CQD9AR8AHwAfAB8AHwAfAD8fAB8AHwAfAB8ABwAwMQAyMzQ1Njc4OUBBQkNERUagQwAAYQBzAE0AZQCAdABoAG8AZKAEACJVbmtub3duAF9P"
+		. "YmplY3RfoAAAUAB1oARoYAMCUyIFAABPAHcAKm7gAnJgBnBgAwAAil8gAEVgAnUAbaABwA0KAAkAIgUIJgoAVHlwZV8AdHIAdWUAZmFsc2UgAG51"
+		. "bGzHA1ZhHGx14APoDQsAU0iBBuzBW0SyiwFMicMgSImUJLihAY1UICRUTI2EgwGJVAAkKDHSSImMJGEhVsdEJFThB+AAIOHhAP9QKIsgqoMDoKQ1"
+		. "YQdYIK5IAASiDmaJQEQkcEiLQ4CzhAwkiAACYX5EJHhIFovkCwAFYCLPiYQk7pCiDwEGQARYoBKhCCBvW6YQ8ABAwgKAADiFADCTBQkRev9QEFw7"
+		. "CYBuZItLc0QQkNA2sQ5bA4E2BABXVlNIg+yQMEG7E4ABuwozEFBIhcBmcAQuUT/SAEyNTCQGeTRBFLsUwAG/MQZImYkE/kSQQvf7KdZmAEOJdFn+"
+		. "Sf/LATADdeaD6QJIYwLBsANEBi0A6xhESJljAoPCMHACFAJZZALoSGPJSAEIyUwB0GcBZoXAAHQdTYXSdA9JAIsSTI1KAk2JYApmiQLrgICwcsGI"
+		. "AuvbQBSDxDAgQiNhC9EKIEiJcATSdIARSIsCSI1IkEQACmbHACIA6ymJMAPrJIBrInUxAQJqJgMCBNABXKATUAJAxAIiUAXDAmYgTJAICNTpUmAf"
+		. "QYMAAkTr6WADXHUcYQPvtW8DAvCVx6GAEwLNHwKgAmIA66UQAgwTAoKrHwICZgDrgxACKAp1HxECiR8CAm4IAOleEpf4DXUjMUACD4RgklWOAnIA"
+		. "1Ok1gwIJhAI3jwKBAhB0AOkMkAGAPbIA+v//AHQLjUgC4CBbXncR6zyNREiBoAAhdgZQBB8Udy0xCRcfBAJ1AATrBBESD7cL6E4dgXW8sZDAAvBr"
+		. "CkyNiEkCTAEbAemlYAE58BfpneQB3hkTHcQgBeknkOAcGDHATI0MHbNhbKAmCEmJyghmwekgB+IPZkcAD74UE2ZFiRQIQUj/UCD4BHXhKrgQdgDx"
+		. "BRXgB2ZFQIsUQUyNWTAIGhBmRIkRNAboAXMC3VIjGMM="
+		if (64 != A_PtrSize * 8)
+			throw Error("$Name does not support " (A_PtrSize * 8) " bit AHK, please run using 64 bit AHK")
+		; MCL standalone loader https://github.com/G33kDude/MCLib.ahk
+		; Copyright (c) 2023 G33kDude, CloakerSmoker (CC-BY-4.0)
+		; https://creativecommons.org/licenses/by/4.0/
+		if IsSet(lib)
+			return lib
+		if !DllCall("Crypt32\CryptStringToBinary", "Str", codeB64, "UInt", 0, "UInt", 1, "Ptr", buf := Buffer(3980), "UInt*", buf.Size, "Ptr", 0, "Ptr", 0, "UInt")
+			throw Error("Failed to convert MCL b64 to binary")
+		if (r := DllCall("ntdll\RtlDecompressBuffer", "UShort", 0x102, "Ptr", code, "UInt", 6960, "Ptr", buf, "UInt", buf.Size, "UInt*", &DecompressedSize := 0, "UInt"))
+			throw Error("Error calling RtlDecompressBuffer",, Format("0x{:08x}", r))
+		for import, offset in Map(['OleAut32', 'SysFreeString'], 5744) {
+			if !(hDll := DllCall("GetModuleHandle", "Str", import[1], "Ptr"))
+				throw Error("Could not load dll " import[1] ": " OsError().Message)
+			if !(pFunction := DllCall("GetProcAddress", "Ptr", hDll, "AStr", import[2], "Ptr"))
+				throw Error("Could not find function " import[2] " from " import[1] ".dll: " OsError().Message)
+			NumPut("Ptr", pFunction, code, offset)
+		}
+		if !DllCall("VirtualProtect", "Ptr", code, "Ptr", code.Size, "UInt", 0x40, "UInt*", &old := 0, "UInt")
+			throw Error("Failed to mark MCL memory as executable")
+		lib := {
+			code: code,
+		dumps: (this, pObjIn, ppszString, pcchString, bPretty, iLevel) =>
+			DllCall(this.code.Ptr + 0, "Ptr", pObjIn, "Ptr", ppszString, "IntP", pcchString, "Int", bPretty, "Int", iLevel, "CDecl Ptr"),
+		loads: (this, ppJson, pResult) =>
+			DllCall(this.code.Ptr + 3296, "Ptr", ppJson, "Ptr", pResult, "CDecl Int")
+		}
+		lib.DefineProp("bBoolsAsInts", {
+			get: (this) => NumGet(this.code.Ptr + 5344, "Int"),
+			set: (this, value) => NumPut("Int", value, this.code.Ptr + 5344)
+		})
+		lib.DefineProp("bEscapeUnicode", {
+			get: (this) => NumGet(this.code.Ptr + 5360, "Int"),
+			set: (this, value) => NumPut("Int", value, this.code.Ptr + 5360)
+		})
+		lib.DefineProp("bNullsAsStrings", {
+			get: (this) => NumGet(this.code.Ptr + 5376, "Int"),
+			set: (this, value) => NumPut("Int", value, this.code.Ptr + 5376)
+		})
+		lib.DefineProp("fnCastString", {
+			get: (this) => NumGet(this.code.Ptr + 5392, "Ptr"),
+			set: (this, value) => NumPut("Ptr", value, this.code.Ptr + 5392)
+		})
+		lib.DefineProp("fnGetArray", {
+			get: (this) => NumGet(this.code.Ptr + 5408, "Ptr"),
+			set: (this, value) => NumPut("Ptr", value, this.code.Ptr + 5408)
+		})
+		lib.DefineProp("fnGetMap", {
+			get: (this) => NumGet(this.code.Ptr + 5424, "Ptr"),
+			set: (this, value) => NumPut("Ptr", value, this.code.Ptr + 5424)
+		})
+		lib.DefineProp("objFalse", {
+			get: (this) => NumGet(this.code.Ptr + 5440, "Ptr"),
+			set: (this, value) => NumPut("Ptr", value, this.code.Ptr + 5440)
+		})
+		lib.DefineProp("objNull", {
+			get: (this) => NumGet(this.code.Ptr + 5456, "Ptr"),
+			set: (this, value) => NumPut("Ptr", value, this.code.Ptr + 5456)
+		})
+		lib.DefineProp("objTrue", {
+			get: (this) => NumGet(this.code.Ptr + 5472, "Ptr"),
+			set: (this, value) => NumPut("Ptr", value, this.code.Ptr + 5472)
+		})
+		return lib
+	}
+	
+	static _LoadLib() {
+		return A_PtrSize = 4 ? this._LoadLib32Bit() : this._LoadLib64Bit()
+	}
 
-                onexitapp(todels, *)
-                {
-                    for o, arr in todels
-                    {
-                        for n in arr
-                            try o.deleteprop(n)
-                    }
-                }
-            }
-        }
-        
-        static mdfunc(fn, sig, prototype := 0)
-        {
-            static p_mdfunc := objptr(msgbox), size := 10 * A_PtrSize + 16
-            static mdtypes :=
-            {
-                void: 0,
-                int8: 1,
-                uint8: 2,
-                int16: 3,
-                uint16: 4,
-                int32: 5,
-                uint32: 6,
-                int64: 7,
-                uint64: 8,
-                float64: 9,
-                float32: 10,
-                string: 11,
-                object: 12,
-                variant: 13,
-                bool32: 14,
-                resulttype: 15,
-                fresult: 16,
-                params: 17,
-                optional: 0x80,
-                retval: 0x81,
-                out: 0x82,
-                ; thiscall,
-                uintptr: A_PtrSize = 8 ? 8 : 6,
-                intptr: A_PtrSize = 8 ? 7 : 5,
-            }
-            if fn is string
-                fn := this.mcode(fn)
-            ; copy a func object memory
-            smdf := buffer(size, 0), dllcall('RtlMoveMemory', 'ptr', smdf, 'ptr', p_mdfunc, 'uint', size)
-            p := numput('ptr', fn, smdf, 6 * A_PtrSize + 16), ac := pc := minparams := 0
-            if prototype
-                numput('char', 1, numput('ptr', isobject(prototype) ? objptr(prototype) : prototype, p) + A_PtrSize + 3), ac := pc := minparams := 1
-            isvariadic := false, maxresulttokens := 0
-            if sig is array
-            {
-                if sig.length > 1
-                    ret := sig.removeat(1), smdf.size += sig.length, ret is string && ret := mdtypes.%ret%
-                else ret := 0
-                opt := false, retval := false, out := 0
-                loop sig.length
-                {
-                    c := sig[A_Index]
-                    if c is String
-                        sig[A_Index] := c := mdtypes.%c%
-                    numput('uchar', c, smdf, size + A_Index - 1)
-                    if c >= 128
-                    {
-                        if c = 128
-                            opt := true
-                        else if c = 0x82
-                            out := c
-                        else if c = 0x81
-                            retval := true
-                        continue
-                    }
-                    if A_PtrSize = 4 && c >= 7 && c <= 9 && !out && !opt
-                        ac++
-                    ac++
-                    if c = 17
-                        isvariadic := true
-                    else if !retval
-                    {
-                        ++pc
-                        if !opt && pc - 1 = minparams
-                            minparams := pc
-                        if c = 13 && out
-                            ++MaxResultTokens
-                    }
-                    opt := false, retval := false, out := 0
-                }
-                numput('ptr', smdf.ptr + size, 'uchar', ret, 'uchar', ac, 'uchar', sig.length, smdf, 8 * A_PtrSize + 16)
-            }
-            else throw
-            paramcount := pc
-            obif := objfromptr(smdf.ptr)
-            ; init func refcount and base obj
-            numput('uint', 1, 'uint', 0, 'ptr', objptraddref(cJSON.native.prototype), smdf, A_PtrSize)
-            ; init func infos
-            numput('ptr', strptr('User-MdFunc'), 'int', paramcount, 'int', minparams, 'int', isvariadic, smdf, 3 * A_PtrSize + 8)
-            numput('ptr', 0, 'ptr', 0, objptr(smdf), 3 * A_PtrSize + 8)	; Avoid the memory of func object be freed when buffer is released
-            return obif
-        }
-    }
+	static Dump(obj, pretty := 0)
+	{
+		if !IsObject(obj)
+			throw Error("Input must be object")
+		size := 0
+		this.lib.dumps(ObjPtr(obj), 0, &size, !!pretty, 0)
+		buf := Buffer(size*5 + 2, 0)
+		bufbuf := Buffer(A_PtrSize)
+		NumPut("Ptr", buf.Ptr, bufbuf)
+		this.lib.dumps(ObjPtr(obj), bufbuf, &size, !!pretty, 0)
+		return StrGet(buf, "UTF-16")
+	}
 
-    native_mcode(hex, argtypes := 0, &code := 0)
-    {
-        static reg := "^([12]?).*" (c := a_ptrsize = 8 ? "x64" : "x86") ":([A-Za-z\d+/=]+)"
-        if (regexmatch(hex, reg, &m))
-            hex := m[2], flag := m[1] = "1" ? 4 : m[1] = "2" ? 1 : hex ~= "[+/=]" ? 1 : 4
-        else
-            flag := hex ~= "[+/=]" ? 1 : 4
-        if (!dllcall("crypt32\CryptStringToBinary", "str", hex, "uint", 0, "uint", flag, "ptr", 0, "uint*", &s := 0, "ptr", 0, "ptr", 0))
-            return
-        code := buffer(s)
-        if (dllcall("crypt32\CryptStringToBinary", "str", hex, "uint", 0, "uint", flag, "ptr", code, "uint*", &s, "ptr", 0, "ptr", 0) && dllcall("VirtualProtect", "ptr", code, "uint", s, "uint", 0x40, "uint*", 0))
-        {
-            args := []
-            if (argtypes is array && argtypes.Length)
-            {
-                args.length := argtypes.length * 2 - 1
-                for i, t in argtypes
-                    args[i * 2 - 1] := t
-            }
-            return dllcall.bind(code, args*)
-        }
-    }
-    
-    class Null
-    {
-        
-    }
+	static Load(json) {
+		_json := " " json ; Prefix with a space to provide room for BSTR prefixes
+		pJson := Buffer(A_PtrSize)
+		NumPut("Ptr", StrPtr(_json), pJson)
+
+		pResult := Buffer(24)
+
+		if r := this.lib.loads(pJson, pResult)
+		{
+			throw Error("Failed to parse JSON (" r ")", -1
+			, Format("Unexpected character at position {}: '{}'"
+			, (NumGet(pJson, 'UPtr') - StrPtr(_json)) // 2, Chr(NumGet(NumGet(pJson, 'UPtr'), 'Short'))))
+		}
+
+		result := ComValue(0x400C, pResult.Ptr)[] ; VT_BYREF | VT_VARIANT
+		if IsObject(result)
+			ObjRelease(ObjPtr(result))
+		return result
+	}
+
+	static True {
+		get {
+			static _ := {value: true, name: 'true'}
+			return _
+		}
+	}
+
+	static False {
+		get {
+			static _ := {value: false, name: 'false'}
+			return _
+		}
+	}
+
+	static Null {
+		get {
+			static _ := {value: '', name: 'null'}
+			return _
+		}
+	}
 }

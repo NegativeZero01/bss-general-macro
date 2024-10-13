@@ -1,5 +1,11 @@
 @echo off
 setlocal enabledelayedexpansion
+set currentdir=%cd%
+pushd ..
+set "parentdir=%cd%\"
+popd
+
+
 
 set "repo=https://api.github.com/repos/NegativeZero01/bss-quest-macro/releases/latest"
 set "macro_zipname=bss.zip"
@@ -20,6 +26,7 @@ call :get_path "tar" || exit /b
 echo ^<%yellow%Bss-quest-macro semi-automatic update-installation system%reset%^>
 echo ^<%blue%Join the Discord if you need help: https://discord.gg/57YmdVy8gA%reset%^>
 pause
+echo ^<%green%Parent Directory found^^! Location: [%parentdir%]%reset%^>
 
 for /F tokens^=4^ delims^=^" %%A in ('%_curl% -s "%repo%" ^| find "zipball_url"') do set "zip_url=%%~A"
 
@@ -63,9 +70,9 @@ echo:
 del /f /q "%macro_zipname%"
 echo ^<%green%Deleted the unextracted .zip%reset%^>
 echo:
-echo ^<%cyan%The operation to download the latest release was completed successfully%reset%^>
-echo ^<%magenta%- To complete installation, please overwrite all old files with the new files in the old directory%reset%^>
-echo ^<%magenta%- If you would like to keep your settings, keep your old%reset% %yellow%settings%reset% %magenta%folder%reset%^>
+echo ^<%cyan%The operation to download the latest release was completed successfully^^! To complete installation, follow the steps below%reset%^>
+echo ^<%magenta%1. Overwrite all old files with the new files in the old directory%reset%^>
+echo ^<%magenta%- If you would like to keep your settings, modified scripts/patterns etc. keep your old%reset% %yellow%settings%reset% %magenta%folder%reset%^>
 echo:
 echo ^<%cyan%Thank you for downloading%reset% %yellow%bss-quest-macro%reset%^>
 <nul set /p "=%white%Press any key to exit . . .%reset%"
