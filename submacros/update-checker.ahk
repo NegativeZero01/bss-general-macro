@@ -9,7 +9,7 @@ QueryUpdate() {
     }
 }
 
-global releasetag := "v0.2.3.0-alpha.1"
+global releasetag := "v0.3.0.0-alpha.1"
 global releases := QueryGitHubRepo("NegativeZero01/bss-quest-macro", "releases")
 global ReleaseName := "bss-quest-macro-" releases[1]["tag_name"]
 
